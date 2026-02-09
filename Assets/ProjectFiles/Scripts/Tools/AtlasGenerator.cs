@@ -43,7 +43,7 @@ public class ASCIIAtlasGenerator
         //Assume all glyphs same size
         int glyphWidth = orderedGlyphs[0].width;
         int glyphHeight = orderedGlyphs[0].height;
-        int padding = 2;
+        int padding = 0;
 
         int atlasWidth = orderedGlyphs.Length * (glyphWidth + padding);
         int atlasHeight = glyphHeight;
