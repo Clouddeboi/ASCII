@@ -22,6 +22,11 @@ public class Voice : MonoBehaviour
 
         clip.SetData(samples, 0);
         source.PlayOneShot(clip);
+
+        if (SubtitleManager.Instance != null)
+        {
+            SubtitleManager.Instance.ShowSubtitleWithAudio(text, clip);
+        }
     }
 
     float[] ConvertToFloats(byte[] data)
