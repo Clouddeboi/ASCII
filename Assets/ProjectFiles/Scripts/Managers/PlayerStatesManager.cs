@@ -3,10 +3,15 @@ using UnityEngine;
 
 public class PlayerStatesManager : MonoBehaviour
 {
+    [Header("------Current State------")]
     [SerializeField] private PlayerStates currentState = PlayerStates.Default;
     private PlayerStates previousState;
 
-    //Events for state changes
+    [Header("------Player Scripts------")]
+    [SerializeField] PlayerCam playerCam;
+    [SerializeField] PlayerMovement playerMovement;
+
+    // Events for state changes
     public event Action<PlayerStates, PlayerStates> OnStateChanged;
     public event Action<PlayerStates> OnStateEnter;
     public event Action<PlayerStates> OnStateExit;
@@ -106,6 +111,8 @@ public class PlayerStatesManager : MonoBehaviour
     {
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
+        playerCam.enabled = true;
+        playerMovement.enabled = true;
     }
 
     private void EnterMenuState()
@@ -117,8 +124,10 @@ public class PlayerStatesManager : MonoBehaviour
 
     private void EnterTerminalState()
     {
-        Cursor.lockState = CursorLockMode.None;
-        Cursor.visible = true;
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
+        playerCam.enabled = false;
+        playerMovement.enabled = false;
     }
 
     private void EnterNPCState()

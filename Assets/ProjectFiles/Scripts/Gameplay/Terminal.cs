@@ -11,43 +11,71 @@ public class Terminal : MonoBehaviour
 
     private bool isOpen = false;
     private List<string> commandHistory = new List<string>();
-    private int maxHistory = 10;//Show last 10 commands
+    private int maxHistory = 10; // Show last 10 commands
 
     void Update()
     {
-        //Toggle terminal with Tab
+        // Toggle terminal with Tab (only if in Default state)
         if (Input.GetKeyDown(KeyCode.Tab))
         {
-            isOpen = !isOpen;
-            terminalPanel.SetActive(isOpen);
-
-            if (isOpen)
+            if (!isOpen && PlayerStatesManager.Instance.IsInState(PlayerStates.Default))
             {
-                inputField.text = "";
-                inputField.ActivateInputField();//Focus input
+                OpenTerminal();
+            }
+            else if (isOpen)
+            {
+                CloseTerminal();
             }
         }
 
-        //Execute command with Enter
+        // Execute command with Enter
         if (isOpen && Input.GetKeyDown(KeyCode.Return))
         {
             string command = inputField.text;
             if (!string.IsNullOrEmpty(command))
             {
-                AddToHistory(command);//Save to history
+                AddToHistory(command); // Save to history
                 HandleCommand(command);
             }
 
-            //Close terminal
-            terminalPanel.SetActive(false);
-            isOpen = false;
+            // Close terminal
+            CloseTerminal();
+        }
+
+        // Also allow Escape to close terminal
+        if (isOpen && Input.GetKeyDown(KeyCode.Escape))
+        {
+            CloseTerminal();
+        }
+    }
+
+    void OpenTerminal()
+    {
+        isOpen = true;
+        terminalPanel.SetActive(true);
+        inputField.text = "";
+        inputField.ActivateInputField(); // Focus input
+        
+        // Change player state to Terminal
+        PlayerStatesManager.Instance.SetState(PlayerStates.Terminal);
+    }
+
+    void CloseTerminal()
+    {
+        isOpen = false;
+        terminalPanel.SetActive(false);
+        
+        // Return to Default state
+        if (PlayerStatesManager.Instance.IsInState(PlayerStates.Terminal))
+        {
+            PlayerStatesManager.Instance.SetState(PlayerStates.Default);
         }
     }
 
     void HandleCommand(string command)
     {
         string[] parts = command.Split(' ', 2);
-        string cmd = parts[0].ToLower();//Case-insensitive
+        string cmd = parts[0].ToLower(); // Case-insensitive
         string args = parts.Length > 1 ? parts[1] : "";
 
         switch (cmd)
@@ -65,14 +93,14 @@ public class Terminal : MonoBehaviour
 
     void AddToHistory(string command)
     {
-        //Add new command to history
+        // Add new command to history
         commandHistory.Add(command);
 
-        //Keep only last maxHistory commands
+        // Keep only last maxHistory commands
         if (commandHistory.Count > maxHistory)
             commandHistory.RemoveAt(0);
 
-        //Update UI
+        // Update UI
         historyText.text = string.Join("\n", commandHistory);
     }
 }
