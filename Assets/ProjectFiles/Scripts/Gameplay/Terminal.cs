@@ -11,11 +11,13 @@ public class Terminal : MonoBehaviour
 
     private bool isOpen = false;
     private List<string> commandHistory = new List<string>();
-    private int maxHistory = 10; // Show last 10 commands
+    private int maxHistory = 10; //Show last 10 commands
+
+    [SerializeField] private SpeechDetector speechDetector;
 
     void Update()
     {
-        // Toggle terminal with Tab (only if in Default state)
+        //Toggle terminal with Tab (only if in Default state)
         if (Input.GetKeyDown(KeyCode.Tab))
         {
             if (!isOpen && PlayerStatesManager.Instance.IsInState(PlayerStates.Default))
@@ -28,21 +30,21 @@ public class Terminal : MonoBehaviour
             }
         }
 
-        // Execute command with Enter
+        //Execute command with Enter
         if (isOpen && Input.GetKeyDown(KeyCode.Return))
         {
             string command = inputField.text;
             if (!string.IsNullOrEmpty(command))
             {
-                AddToHistory(command); // Save to history
+                AddToHistory(command); //Save to history
                 HandleCommand(command);
             }
 
-            // Close terminal
+            //Close terminal
             CloseTerminal();
         }
 
-        // Also allow Escape to close terminal
+        //Also allow Escape to close terminal
         if (isOpen && Input.GetKeyDown(KeyCode.Escape))
         {
             CloseTerminal();
@@ -54,9 +56,9 @@ public class Terminal : MonoBehaviour
         isOpen = true;
         terminalPanel.SetActive(true);
         inputField.text = "";
-        inputField.ActivateInputField(); // Focus input
+        inputField.ActivateInputField(); //Focus input
         
-        // Change player state to Terminal
+        //Change player state to Terminal
         PlayerStatesManager.Instance.SetState(PlayerStates.Terminal);
     }
 
@@ -65,7 +67,7 @@ public class Terminal : MonoBehaviour
         isOpen = false;
         terminalPanel.SetActive(false);
         
-        // Return to Default state
+        //Return to Default state
         if (PlayerStatesManager.Instance.IsInState(PlayerStates.Terminal))
         {
             PlayerStatesManager.Instance.SetState(PlayerStates.Default);
@@ -75,15 +77,19 @@ public class Terminal : MonoBehaviour
     void HandleCommand(string command)
     {
         string[] parts = command.Split(' ', 2);
-        string cmd = parts[0].ToLower(); // Case-insensitive
+        string cmd = parts[0].ToLower(); //Case-insensitive
         string args = parts.Length > 1 ? parts[1] : "";
 
         switch (cmd)
         {
             case "/speak":
-                if (!string.IsNullOrEmpty(args))
-                    voice.Speak(args);
-                break;
+            if (!string.IsNullOrEmpty(args))
+            {
+                Debug.Log($"Speaker GameObject: {gameObject.name}, Tag: {gameObject.tag}, Root: {gameObject.transform.root.name}, Root Tag: {gameObject.transform.root.tag}");
+                voice.Speak(args);
+                speechDetector.NotifySpeech(gameObject, args);
+            }
+            break;
 
             default:
                 Debug.Log("Unknown command: " + cmd);
@@ -93,14 +99,14 @@ public class Terminal : MonoBehaviour
 
     void AddToHistory(string command)
     {
-        // Add new command to history
+        //Add new command to history
         commandHistory.Add(command);
 
-        // Keep only last maxHistory commands
+        //Keep only last maxHistory commands
         if (commandHistory.Count > maxHistory)
             commandHistory.RemoveAt(0);
 
-        // Update UI
+        //Update UI
         historyText.text = string.Join("\n", commandHistory);
     }
 }
