@@ -5,13 +5,7 @@ public class Voice : MonoBehaviour
 {
     public AudioSource source;
     Sam sam = new Sam();
-
-    void Start()
-    {
-        //Debug
-        Speak("Hello I am Sam");
-    }
-
+    
     public void Speak(string text)
     {
         byte[] bytes = sam.Speak(text);
