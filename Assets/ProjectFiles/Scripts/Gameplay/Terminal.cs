@@ -1,18 +1,21 @@
+using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
 using TMPro;
 
 public class Terminal : MonoBehaviour
 {
     public GameObject terminalPanel;
     public TMP_InputField inputField;
+    public TMP_Text historyText;
     public Voice voice;
 
     private bool isOpen = false;
+    private List<string> commandHistory = new List<string>();
+    private int maxHistory = 10;//Show last 10 commands
 
     void Update()
     {
-        // Toggle terminal
+        //Toggle terminal with Tab
         if (Input.GetKeyDown(KeyCode.Tab))
         {
             isOpen = !isOpen;
@@ -21,17 +24,21 @@ public class Terminal : MonoBehaviour
             if (isOpen)
             {
                 inputField.text = "";
-                inputField.ActivateInputField();//Focus the input
+                inputField.ActivateInputField();//Focus input
             }
         }
 
-        //Execute command when Enter is pressed
+        //Execute command with Enter
         if (isOpen && Input.GetKeyDown(KeyCode.Return))
         {
             string command = inputField.text;
-            HandleCommand(command);
+            if (!string.IsNullOrEmpty(command))
+            {
+                AddToHistory(command);//Save to history
+                HandleCommand(command);
+            }
 
-            //Close terminal after executing command
+            //Close terminal
             terminalPanel.SetActive(false);
             isOpen = false;
         }
@@ -39,12 +46,8 @@ public class Terminal : MonoBehaviour
 
     void HandleCommand(string command)
     {
-        if (string.IsNullOrEmpty(command))
-            return;
-
-        //Split command and args
         string[] parts = command.Split(' ', 2);
-        string cmd = parts[0].ToLower();
+        string cmd = parts[0].ToLower();//Case-insensitive
         string args = parts.Length > 1 ? parts[1] : "";
 
         switch (cmd)
@@ -58,5 +61,18 @@ public class Terminal : MonoBehaviour
                 Debug.Log("Unknown command: " + cmd);
                 break;
         }
+    }
+
+    void AddToHistory(string command)
+    {
+        //Add new command to history
+        commandHistory.Add(command);
+
+        //Keep only last maxHistory commands
+        if (commandHistory.Count > maxHistory)
+            commandHistory.RemoveAt(0);
+
+        //Update UI
+        historyText.text = string.Join("\n", commandHistory);
     }
 }
