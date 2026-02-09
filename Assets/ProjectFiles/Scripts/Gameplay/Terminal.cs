@@ -82,12 +82,18 @@ public class Terminal : MonoBehaviour
 
         switch (cmd)
         {
-            case "/speak":
+        case "/speak":
             if (!string.IsNullOrEmpty(args))
             {
-                Debug.Log($"Speaker GameObject: {gameObject.name}, Tag: {gameObject.tag}, Root: {gameObject.transform.root.name}, Root Tag: {gameObject.transform.root.tag}");
-                voice.Speak(args);
-                speechDetector.NotifySpeech(gameObject, args);
+                bool success = voice.Speak(args);
+                if (success)
+                {
+                    speechDetector.NotifySpeech(gameObject, args);
+                }
+                else
+                {
+                    Debug.Log("Speech failed - NPCs won't hear garbled text");
+                }
             }
             break;
 
