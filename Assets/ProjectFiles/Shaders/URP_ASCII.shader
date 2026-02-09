@@ -1,9 +1,20 @@
-Shader "Custom/URP_ASCII"
+Shader "Custom/URP_ASCII_Font"
 {
     Properties
     {
         _MainTex ("Source", 2D) = "white" {}
-        _CellSize ("Cell Size", Float) = 8
+        _FontTex ("Font Atlas", 2D) = "white" {}
+
+        _CellSize ("ASCII Cell Size", Range(8,64)) = 24
+        _CellAspect ("Cell Aspect XY", Vector) = (1,1,0,0)
+
+        _Contrast ("Contrast", Range(0.2,3)) = 1
+        _Brightness ("Brightness", Range(-1,1)) = 0
+
+        _Tint ("ASCII Tint", Color) = (1,1,1,1)
+        _Background ("Background", Color) = (0,0,0,1)
+
+        _AtlasGrid ("Atlas Columns/Rows", Vector) = (16,16,0,0)
     }
 
     SubShader
@@ -16,7 +27,7 @@ Shader "Custom/URP_ASCII"
 
         Pass
         {
-            Name "ASCII"
+            Name "ASCII_Font"
 
             ZWrite Off
             Cull Off
@@ -30,8 +41,16 @@ Shader "Custom/URP_ASCII"
             TEXTURE2D(_MainTex);
             SAMPLER(sampler_MainTex);
 
+            TEXTURE2D(_FontTex);
+            SAMPLER(sampler_FontTex);
+
             float _CellSize;
-            //float4 _ScreenParams;
+            float4 _CellAspect;
+            float _Contrast;
+            float _Brightness;
+            float4 _Tint;
+            float4 _Background;
+            float4 _AtlasGrid;
 
             struct Attributes
             {
@@ -45,7 +64,7 @@ Shader "Custom/URP_ASCII"
                 float2 uv : TEXCOORD0;
             };
 
-            Varyings vert (Attributes v)
+            Varyings vert(Attributes v)
             {
                 Varyings o;
                 o.positionHCS = TransformObjectToHClip(v.positionOS.xyz);
@@ -53,43 +72,43 @@ Shader "Custom/URP_ASCII"
                 return o;
             }
 
-            float character(int n, float2 p)
-            {
-                p = floor(p * float2(-4,4) + 2.5);
-
-                if (p.x < 0 || p.x > 4 || p.y < 0 || p.y > 4)
-                    return 0;
-
-                int a = (int)p.x + 5 * (int)p.y;
-                return ((n >> a) & 1) ? 1 : 0;
-            }
-
             float4 frag(Varyings i) : SV_Target
             {
-                float2 pix = i.uv * _ScreenParams.xy;
+                float2 resolution = _ScreenParams.xy;
+                float2 pix = i.uv * resolution;
 
-                float2 snappedUV =
-                    floor(pix/_CellSize)*_CellSize/_ScreenParams.xy;
+                // cell scaling
+                float2 cellSize = max(_CellSize,1) * float2(_CellAspect.x,_CellAspect.y);
+                float2 snappedUV = floor(pix/cellSize) * cellSize / resolution;
 
-                float3 col =
-                    SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, snappedUV).rgb;
+                // sample screen color
+                float3 col = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, snappedUV).rgb;
 
-                float gray = dot(col, float3(0.3,0.59,0.11));
+                // grayscale
+                float gray = dot(col, float3(0.299,0.587,0.114));
+                gray = saturate(gray * _Contrast + _Brightness);
 
-                int n = 4096;
-                if(gray>0.2) n=65600;
-                if(gray>0.3) n=163153;
-                if(gray>0.4) n=15255086;
-                if(gray>0.5) n=13121101;
-                if(gray>0.6) n=15252014;
-                if(gray>0.7) n=13195790;
-                if(gray>0.8) n=11512810;
+                // map brightness to ASCII index
+                float totalChars = _AtlasGrid.x * _AtlasGrid.y;
+                float charIndex = floor(gray * (totalChars-1));
 
-                float2 p = fmod(pix/4.0,2.0)-1.0;
+                // calculate grid position
+                float2 atlasDim = _AtlasGrid.xy;
+                float2 charPos;
+                charPos.x = fmod(charIndex, atlasDim.x);
+                charPos.y = floor(charIndex / atlasDim.x);
 
-                float ascii = character(n,p);
+                // local UV inside cell
+                float2 glyphUV = frac(pix/cellSize);
 
-                return float4(col * ascii, 1);
+                // sample font atlas
+                float2 fontUV = (charPos + glyphUV) / atlasDim;
+                float glyph = SAMPLE_TEXTURE2D(_FontTex, sampler_FontTex, fontUV).r;
+
+                // final color
+                float3 final = lerp(_Background.rgb, col * _Tint.rgb, glyph);
+
+                return float4(final,1);
             }
 
             ENDHLSL
