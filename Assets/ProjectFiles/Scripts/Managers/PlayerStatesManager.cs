@@ -109,8 +109,7 @@ public class PlayerStatesManager : MonoBehaviour
     // State-specific enter methods
     private void EnterDefaultState()
     {
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
+        StartCoroutine(LockCursorDelayed());
         playerCam.enabled = true;
         playerMovement.enabled = true;
     }
@@ -181,5 +180,14 @@ public class PlayerStatesManager : MonoBehaviour
     public bool CanPlayerInteract()
     {
         return currentState == PlayerStates.Default;
+    }
+
+    private System.Collections.IEnumerator LockCursorDelayed()
+    {
+        Cursor.visible = false;
+        Cursor.lockState = CursorLockMode.None;
+        yield return null; // Wait one frame
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
     }
 }
