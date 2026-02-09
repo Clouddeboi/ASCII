@@ -1,4 +1,4 @@
-enum PlayerStates
+public enum PlayerStates
 {
     Default,
     Menu,
