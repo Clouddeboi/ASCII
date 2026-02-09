@@ -280,7 +280,7 @@ GameObject:
   - component: {fileID: 239965399}
   - component: {fileID: 239965400}
   m_Layer: 7
-  m_Name: Sphere
+  m_Name: NPCTest
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -390,21 +390,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d086d4dbd082bf64bb55172b863b0e9e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NPCListener
+  npcData: {fileID: 11400000, guid: 40a84b130f6274c43b1d017c34dbe228, type: 2}
   npcVoice: {fileID: 239965400}
-  responseDelay: 0.5
-  greetingResponses:
-  - Hello there!
-  - Hi friend!
-  - Greetings!
-  questionResponses:
-  - I'm not sure.
-  - Let me think...
-  - Good question!
-  defaultResponses:
-  - Interesting.
-  - I see.
-  - Hmm.
-  responseCooldown: 2
 --- !u!114 &239965400
 MonoBehaviour:
   m_ObjectHideFlags: 0

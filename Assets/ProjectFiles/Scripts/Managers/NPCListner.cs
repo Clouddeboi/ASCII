@@ -1,29 +1,35 @@
 using UnityEngine;
 using System.Collections;
+using System.Linq;
 
 public class NPCListener : MonoBehaviour, IListener
 {
-    [Header("Response Settings")]
-    [SerializeField] private Voice npcVoice;
-    [SerializeField] private float responseDelay = 0.5f; //Wait a bit before responding
+    [Header("NPC Configuration")]
+    [SerializeField] private NPCData npcData;
     
-    [Header("Responses")]
-    [SerializeField] private string[] greetingResponses = { "Hello there!", "Hi friend!", "Greetings!" };
-    [SerializeField] private string[] questionResponses = { "I'm not sure.", "Let me think...", "Good question!" };
-    [SerializeField] private string[] defaultResponses = { "Interesting.", "I see.", "Hmm." };
+    [Header("Component References")]
+    [SerializeField] private Voice npcVoice;
 
     private float lastResponseTime;
-    [SerializeField] private float responseCooldown = 2f;
-
     private Coroutine responseCoroutine;
+
+    void Start()
+    {
+        if (npcData == null)
+        {
+            Debug.LogWarning($"[{gameObject.name}] No NPCData assigned!");
+        }
+    }
 
     public void OnPlayerSpoke(GameObject speaker, string spokenText)
     {
-        Debug.Log($"[{gameObject.name}] OnPlayerSpoke called with: '{spokenText}'");
+        if (npcData == null) return;
         
-        if (Time.time - lastResponseTime < responseCooldown)
+        Debug.Log($"[{npcData.npcName}] OnPlayerSpoke called with: '{spokenText}'");
+        
+        if (Time.time - lastResponseTime < npcData.responseCooldown)
         {
-            Debug.Log($"[{gameObject.name}] Still in cooldown");
+            Debug.Log($"[{npcData.npcName}] Still in cooldown");
             return;
         }
         
@@ -31,11 +37,11 @@ public class NPCListener : MonoBehaviour, IListener
 
         if (!speaker.transform.root.CompareTag("Player"))
         {
-            Debug.Log($"[{gameObject.name}] Speaker is not player");
+            Debug.Log($"[{npcData.npcName}] Speaker is not player");
             return;
         }
 
-        Debug.Log($"[{gameObject.name}] Starting response coroutine");
+        Debug.Log($"[{npcData.npcName}] Starting response coroutine");
         
         if (responseCoroutine != null)
             StopCoroutine(responseCoroutine);
@@ -45,14 +51,13 @@ public class NPCListener : MonoBehaviour, IListener
 
     private IEnumerator RespondAfterDelay(string playerText)
     {
-        Debug.Log($"[{gameObject.name}] RespondAfterDelay coroutine STARTED");
+        Debug.Log($"[{npcData.npcName}] RespondAfterDelay coroutine STARTED");
         
-        yield return new WaitForSeconds(responseDelay);
+        yield return new WaitForSeconds(npcData.responseDelay);
 
-        //Choose response based on what player said
         string response = ChooseResponse(playerText);
         
-        Debug.Log($"{gameObject.name} responding: {response}");
+        Debug.Log($"{npcData.npcName} responding: {response}");
         
         if (npcVoice != null)
         {
@@ -66,19 +71,50 @@ public class NPCListener : MonoBehaviour, IListener
     {
         string textLower = playerText.ToLower();
 
-        //Check for greetings
-        if (textLower.Contains("hello") || textLower.Contains("hi") || textLower.Contains("hey"))
+        // Check each dialogue category
+        foreach (DialogueCategory category in npcData.dialogueCategories)
         {
-            return greetingResponses[Random.Range(0, greetingResponses.Length)];
+            if (category.triggers == null || category.triggers.Length == 0)
+                continue;
+
+            bool triggered = false;
+
+            foreach (string trigger in category.triggers)
+            {
+                if (string.IsNullOrEmpty(trigger))
+                    continue;
+
+                string triggerLower = trigger.ToLower();
+
+                if (category.exactWordMatch)
+                {
+                    // Check for exact word match
+                    string[] words = textLower.Split(new char[] { ' ', '.', '!', '?' }, System.StringSplitOptions.RemoveEmptyEntries);
+                    triggered = words.Contains(triggerLower);
+                }
+                else
+                {
+                    // Check if trigger is contained anywhere
+                    triggered = textLower.Contains(triggerLower);
+                }
+
+                if (triggered)
+                    break;
+            }
+
+            // If triggered and has responses, return random response
+            if (triggered && category.responses != null && category.responses.Length > 0)
+            {
+                return category.responses[Random.Range(0, category.responses.Length)];
+            }
         }
 
-        //Check for questions
-        if (textLower.Contains("?") || textLower.Contains("what") || textLower.Contains("how") || textLower.Contains("why"))
+        // Return default response if no category matched
+        if (npcData.defaultResponses != null && npcData.defaultResponses.Length > 0)
         {
-            return questionResponses[Random.Range(0, questionResponses.Length)];
+            return npcData.defaultResponses[Random.Range(0, npcData.defaultResponses.Length)];
         }
 
-        //Default response
-        return defaultResponses[Random.Range(0, defaultResponses.Length)];
+        return "...";
     }
 }
