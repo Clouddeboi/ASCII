@@ -405,6 +405,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Voice
   source: {fileID: 1364670764}
+  pitch: 1
+  speed: 1
+  distortion: 0
+  enableReverb: 0
+  reverbLevel: 0.5
 --- !u!1 &253139908
 GameObject:
   m_ObjectHideFlags: 0
@@ -1398,6 +1403,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Voice
   source: {fileID: 1364670764}
+  pitch: 1
+  speed: 1
+  distortion: 0
+  enableReverb: 0
+  reverbLevel: 0.5
 --- !u!114 &631894069
 MonoBehaviour:
   m_ObjectHideFlags: 0

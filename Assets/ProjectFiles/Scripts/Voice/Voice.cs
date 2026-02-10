@@ -3,7 +3,24 @@ using SamSharp;
 
 public class Voice : MonoBehaviour
 {
+    [Header("Audio")]
     public AudioSource source;
+    
+    [Header("Voice Settings")]
+    [Range(0.5f, 2f)]
+    [SerializeField] private float pitch = 1f;
+    
+    [Range(0.5f, 1.5f)]
+    [SerializeField] private float speed = 1f;
+    
+    [Range(0f, 1f)]
+    [SerializeField] private float distortion = 0f;
+    
+    [SerializeField] private bool enableReverb = false;
+    
+    [Range(0f, 1f)]
+    [SerializeField] private float reverbLevel = 0.5f;
+    
     Sam sam = new Sam();
     
     public bool Speak(string text)
@@ -16,6 +33,12 @@ public class Voice : MonoBehaviour
             byte[] bytes = sam.Speak(sanitizedText);
 
             float[] samples = ConvertToFloats(bytes);
+            
+            // Apply speed modification
+            if (speed != 1f)
+            {
+                samples = ChangeSpeed(samples, speed);
+            }
 
             AudioClip clip = AudioClip.Create(
                 "SAM",
@@ -26,6 +49,13 @@ public class Voice : MonoBehaviour
             );
 
             clip.SetData(samples, 0);
+            
+            // Apply pitch
+            source.pitch = pitch;
+            
+            // Apply audio effects
+            ApplyAudioEffects();
+            
             source.PlayOneShot(clip);
 
             // Show original text in subtitles (not sanitized)
@@ -43,6 +73,67 @@ public class Voice : MonoBehaviour
             
             return false; // Failed
         }
+    }
+
+    private void ApplyAudioEffects()
+    {
+        // Distortion effect
+        AudioDistortionFilter distortionFilter = source.GetComponent<AudioDistortionFilter>();
+        if (distortion > 0f)
+        {
+            if (distortionFilter == null)
+                distortionFilter = source.gameObject.AddComponent<AudioDistortionFilter>();
+            
+            distortionFilter.enabled = true;
+            distortionFilter.distortionLevel = distortion;
+        }
+        else if (distortionFilter != null)
+        {
+            distortionFilter.enabled = false;
+        }
+        
+        // Reverb effect
+        AudioReverbFilter reverbFilter = source.GetComponent<AudioReverbFilter>();
+        if (enableReverb)
+        {
+            if (reverbFilter == null)
+                reverbFilter = source.gameObject.AddComponent<AudioReverbFilter>();
+            
+            reverbFilter.enabled = true;
+            reverbFilter.reverbPreset = AudioReverbPreset.Generic;
+            reverbFilter.dryLevel = Mathf.Lerp(0, -10000, 1f - reverbLevel);
+            reverbFilter.room = Mathf.Lerp(-10000, 0, reverbLevel);
+        }
+        else if (reverbFilter != null)
+        {
+            reverbFilter.enabled = false;
+        }
+    }
+
+    private float[] ChangeSpeed(float[] samples, float speedMultiplier)
+    {
+        if (speedMultiplier == 1f) return samples;
+        
+        int newLength = Mathf.RoundToInt(samples.Length / speedMultiplier);
+        float[] newSamples = new float[newLength];
+        
+        for (int i = 0; i < newLength; i++)
+        {
+            float sourceIndex = i * speedMultiplier;
+            int index = Mathf.FloorToInt(sourceIndex);
+            
+            if (index < samples.Length - 1)
+            {
+                float fraction = sourceIndex - index;
+                newSamples[i] = Mathf.Lerp(samples[index], samples[index + 1], fraction);
+            }
+            else if (index < samples.Length)
+            {
+                newSamples[i] = samples[index];
+            }
+        }
+        
+        return newSamples;
     }
 
     private string SanitizeText(string text)
