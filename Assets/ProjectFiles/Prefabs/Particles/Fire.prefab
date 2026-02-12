@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 7373711744732471602}
   - component: {fileID: 7182039365039281960}
   m_Layer: 0
-  m_Name: Brigthness
+  m_Name: Additive
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
