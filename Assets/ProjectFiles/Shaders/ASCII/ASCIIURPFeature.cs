@@ -1,5 +1,7 @@
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.RenderGraphModule;
+using UnityEngine.Rendering.RenderGraphModule.Util;
 using UnityEngine.Rendering.Universal;
 
 public class ASCIIURPFeature : ScriptableRendererFeature
@@ -7,43 +9,27 @@ public class ASCIIURPFeature : ScriptableRendererFeature
     class ASCIIPass : ScriptableRenderPass
     {
         public Material material;
-        RTHandle tempTexture;
-        RTHandle source;
 
-        public void Setup(RTHandle src)
-        {
-            source = src;
-        }
-
-        public override void OnCameraSetup(
-            CommandBuffer cmd,
-            ref RenderingData renderingData)
-        {
-            var desc = renderingData.cameraData.cameraTargetDescriptor;
-            RenderingUtils.ReAllocateIfNeeded(
-                ref tempTexture,
-                desc,
-                name: "_ASCII_Temp");
-        }
-
-        public override void Execute(
-            ScriptableRenderContext context,
-            ref RenderingData renderingData)
+        public override void RecordRenderGraph(
+            RenderGraph renderGraph,
+            ContextContainer frameData)
         {
             if (!material) return;
 
-            CommandBuffer cmd = CommandBufferPool.Get("ASCII Pass");
+            var resourceData = frameData.Get<UniversalResourceData>();
+            var cameraColor = resourceData.activeColorTexture;
 
-            Blit(cmd, source, tempTexture, material, 0);
-            Blit(cmd, tempTexture, source);
+            var desc = renderGraph.GetTextureDesc(cameraColor);
+            desc.name = "_ASCII_Temp";
+            desc.clearBuffer = false;
+            desc.depthBufferBits = 0;
+            var tempTexture = renderGraph.CreateTexture(desc);
 
-            context.ExecuteCommandBuffer(cmd);
-            CommandBufferPool.Release(cmd);
-        }
+            RenderGraphUtils.BlitMaterialParameters blitToTemp = new(cameraColor, tempTexture, material, 0);
+            renderGraph.AddBlitPass(blitToTemp, "ASCII Pass - Material Blit");
 
-        public override void OnCameraCleanup(CommandBuffer cmd)
-        {
-            tempTexture?.Release();
+            RenderGraphUtils.BlitMaterialParameters blitToColor = new(tempTexture, cameraColor, null, 0);
+            renderGraph.AddBlitPass(blitToColor, "ASCII Pass - Copy Back");
         }
     }
 
@@ -64,7 +50,6 @@ public class ASCIIURPFeature : ScriptableRendererFeature
         if (!material) return;
 
         pass.material = material;
-        pass.Setup(renderer.cameraColorTargetHandle);
         renderer.EnqueuePass(pass);
     }
 }
