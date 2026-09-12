@@ -5,135 +5,174 @@ public class Voice : MonoBehaviour
 {
     [Header("Audio")]
     public AudioSource source;
-    
-    [Header("Voice Settings")]
-    [Range(0.5f, 2f)]
-    [SerializeField] private float pitch = 1f;
-    
-    [Range(0.5f, 1.5f)]
-    [SerializeField] private float speed = 1f;
-    
-    [Range(0f, 1f)]
-    [SerializeField] private float distortion = 0f;
-    
-    [SerializeField] private bool enableReverb = false;
-    
-    [Range(0f, 1f)]
-    [SerializeField] private float reverbLevel = 0.5f;
-    
-    Sam sam = new Sam();
-    
+
+    [Header("Preset")]
+    [SerializeField] private VoicePreset preset;
+
+    private int? overridePitch;
+    private int? overrideSpeed;
+    private int? overrideThroat;
+    private int? overrideMouth;
+
+    private AudioDistortionFilter distortionFilter;
+    private AudioReverbFilter reverbFilter;
+    private AudioLowPassFilter lowPassFilter;
+    private AudioHighPassFilter highPassFilter;
+    private AudioEchoFilter echoFilter;
+    private AudioChorusFilter chorusFilter;
+
+    private void Awake()
+    {
+        CacheFilters();
+    }
+
+    private void CacheFilters()
+    {
+        if (source == null) return;
+
+        distortionFilter = source.GetComponent<AudioDistortionFilter>();
+        if (distortionFilter == null) distortionFilter = source.gameObject.AddComponent<AudioDistortionFilter>();
+
+        reverbFilter = source.GetComponent<AudioReverbFilter>();
+        if (reverbFilter == null) reverbFilter = source.gameObject.AddComponent<AudioReverbFilter>();
+
+        lowPassFilter = source.GetComponent<AudioLowPassFilter>();
+        if (lowPassFilter == null) lowPassFilter = source.gameObject.AddComponent<AudioLowPassFilter>();
+
+        highPassFilter = source.GetComponent<AudioHighPassFilter>();
+        if (highPassFilter == null) highPassFilter = source.gameObject.AddComponent<AudioHighPassFilter>();
+
+        echoFilter = source.GetComponent<AudioEchoFilter>();
+        if (echoFilter == null) echoFilter = source.gameObject.AddComponent<AudioEchoFilter>();
+
+        chorusFilter = source.GetComponent<AudioChorusFilter>();
+        if (chorusFilter == null) chorusFilter = source.gameObject.AddComponent<AudioChorusFilter>();
+
+        //All filters start disabled; ApplyAudioEffects enables only what the active preset needs.
+        distortionFilter.enabled = false;
+        reverbFilter.enabled = false;
+        lowPassFilter.enabled = false;
+        highPassFilter.enabled = false;
+        echoFilter.enabled = false;
+        chorusFilter.enabled = false;
+    }
+
+    public void SetPreset(VoicePreset newPreset)
+    {
+        preset = newPreset;
+        ClearOverrides();
+    }
+
+    public void ClearOverrides()
+    {
+        overridePitch = null;
+        overrideSpeed = null;
+        overrideThroat = null;
+        overrideMouth = null;
+    }
+
+    public void OverridePitch(int value) => overridePitch = Mathf.Clamp(value, 0, 255);
+    public void OverrideSpeed(int value) => overrideSpeed = Mathf.Clamp(value, 0, 255);
+    public void OverrideThroat(int value) => overrideThroat = Mathf.Clamp(value, 0, 255);
+    public void OverrideMouth(int value) => overrideMouth = Mathf.Clamp(value, 0, 255);
+
     public bool Speak(string text)
     {
+        if (string.IsNullOrWhiteSpace(text))
+            return false;
+
+        if (preset == null || source == null)
+        {
+            Debug.LogWarning("Voice.Speak requires both a VoicePreset and an AudioSource to be assigned.", this);
+            return false;
+        }
+
         try
         {
-            // Sanitize text for SAM compatibility
             string sanitizedText = SanitizeText(text);
-            
-            byte[] bytes = sam.Speak(sanitizedText);
+            if (string.IsNullOrEmpty(sanitizedText))
+                return false;
 
-            float[] samples = ConvertToFloats(bytes);
-            
-            // Apply speed modification
-            if (speed != 1f)
-            {
-                samples = ChangeSpeed(samples, speed);
-            }
+            AudioClip clip = GenerateClip(sanitizedText);
 
-            AudioClip clip = AudioClip.Create(
-                "SAM",
-                samples.Length,
-                1,
-                22050,
-                false
-            );
-
-            clip.SetData(samples, 0);
-            
-            // Apply pitch
-            source.pitch = pitch;
-            
-            // Apply audio effects
+            ApplyPlaybackSettings();
             ApplyAudioEffects();
-            
+
             source.PlayOneShot(clip);
 
-            // Show original text in subtitles (not sanitized)
+            //Original unsanitized text is kept for subtitles.
             if (SubtitleManager.Instance != null)
-            {
                 SubtitleManager.Instance.ShowSubtitleWithAudio(text, clip);
-            }
-            
-            return true; // Success
+
+            return true;
         }
         catch (System.Exception e)
         {
-            Debug.LogWarning($"SAM TTS failed for text: '{text}'. Error: {e.Message}");
-            SubtitleManager.Instance.ShowSubtitle("[ERROR] Speech gargled with oil, speech cannot be detected.", 3f);
-            
-            return false; // Failed
+            Debug.LogWarning($"SAM TTS failed for text: '{text}'. Error: {e.Message}", this);
+            if (SubtitleManager.Instance != null)
+                SubtitleManager.Instance.ShowSubtitle("[ERROR] Speech gargled with oil, speech cannot be detected.", 3f);
+            return false;
         }
+    }
+
+    private AudioClip GenerateClip(string sanitizedText)
+    {
+        var options = new Options(
+            pitch: (byte)(overridePitch ?? preset.samPitch),
+            mouth: (byte)(overrideMouth ?? preset.samMouth),
+            throat: (byte)(overrideThroat ?? preset.samThroat),
+            speed: (byte)(overrideSpeed ?? preset.samSpeed),
+            singMode: preset.singMode);
+
+        var sam = new Sam(options);
+        byte[] bytes = sam.Speak(sanitizedText);
+        float[] samples = ConvertToFloats(bytes);
+
+        AudioClip clip = AudioClip.Create("SAM", samples.Length, 1, 22050, false);
+        clip.SetData(samples, 0);
+        return clip;
+    }
+
+    private void ApplyPlaybackSettings()
+    {
+        source.pitch = preset.audioPitch;
+        source.volume = preset.volume;
     }
 
     private void ApplyAudioEffects()
     {
-        // Distortion effect
-        AudioDistortionFilter distortionFilter = source.GetComponent<AudioDistortionFilter>();
-        if (distortion > 0f)
-        {
-            if (distortionFilter == null)
-                distortionFilter = source.gameObject.AddComponent<AudioDistortionFilter>();
-            
-            distortionFilter.enabled = true;
-            distortionFilter.distortionLevel = distortion;
-        }
-        else if (distortionFilter != null)
-        {
-            distortionFilter.enabled = false;
-        }
-        
-        // Reverb effect
-        AudioReverbFilter reverbFilter = source.GetComponent<AudioReverbFilter>();
-        if (enableReverb)
-        {
-            if (reverbFilter == null)
-                reverbFilter = source.gameObject.AddComponent<AudioReverbFilter>();
-            
-            reverbFilter.enabled = true;
-            reverbFilter.reverbPreset = AudioReverbPreset.Generic;
-            reverbFilter.dryLevel = Mathf.Lerp(0, -10000, 1f - reverbLevel);
-            reverbFilter.room = Mathf.Lerp(-10000, 0, reverbLevel);
-        }
-        else if (reverbFilter != null)
-        {
-            reverbFilter.enabled = false;
-        }
-    }
+        var fx = preset.effects;
 
-    private float[] ChangeSpeed(float[] samples, float speedMultiplier)
-    {
-        if (speedMultiplier == 1f) return samples;
-        
-        int newLength = Mathf.RoundToInt(samples.Length / speedMultiplier);
-        float[] newSamples = new float[newLength];
-        
-        for (int i = 0; i < newLength; i++)
+        distortionFilter.enabled = fx.enableDistortion;
+        if (fx.enableDistortion)
+            distortionFilter.distortionLevel = fx.distortionLevel;
+
+        reverbFilter.enabled = fx.enableReverb;
+        if (fx.enableReverb)
         {
-            float sourceIndex = i * speedMultiplier;
-            int index = Mathf.FloorToInt(sourceIndex);
-            
-            if (index < samples.Length - 1)
-            {
-                float fraction = sourceIndex - index;
-                newSamples[i] = Mathf.Lerp(samples[index], samples[index + 1], fraction);
-            }
-            else if (index < samples.Length)
-            {
-                newSamples[i] = samples[index];
-            }
+            reverbFilter.reverbPreset = fx.reverbPreset;
+            reverbFilter.dryLevel = Mathf.Lerp(0, -10000, 1f - fx.reverbLevel);
+            reverbFilter.room = Mathf.Lerp(-10000, 0, fx.reverbLevel);
         }
-        
-        return newSamples;
+
+        lowPassFilter.enabled = fx.enableLowPass;
+        if (fx.enableLowPass)
+            lowPassFilter.cutoffFrequency = fx.lowPassCutoff;
+
+        highPassFilter.enabled = fx.enableHighPass;
+        if (fx.enableHighPass)
+            highPassFilter.cutoffFrequency = fx.highPassCutoff;
+
+        echoFilter.enabled = fx.enableEcho;
+        if (fx.enableEcho)
+        {
+            echoFilter.delay = fx.echoDelay;
+            echoFilter.decayRatio = fx.echoDecay;
+        }
+
+        chorusFilter.enabled = fx.enableChorus;
+        if (fx.enableChorus)
+            chorusFilter.depth = fx.chorusDepth;
     }
 
     private string SanitizeText(string text)
@@ -141,37 +180,23 @@ public class Voice : MonoBehaviour
         if (string.IsNullOrEmpty(text))
             return text;
 
-        // Replace apostrophes with nothing
         text = text.Replace("'", "");
         text = text.Replace("`", "");
-        
-        // Remove any other non-ASCII characters that SAM can't handle
-        // Keep only letters, numbers, spaces, and basic punctuation
+
         string allowed = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 .,!?-";
-        string result = "";
-        
+        var result = new System.Text.StringBuilder(text.Length);
+
         foreach (char c in text)
-        {
-            if (allowed.Contains(c.ToString()))
-            {
-                result += c;
-            }
-            else
-            {
-                result += " "; // Replace unknown characters with space
-            }
-        }
-        
-        // Clean up multiple spaces
-        while (result.Contains("  "))
-        {
-            result = result.Replace("  ", " ");
-        }
-        
-        return result.Trim();
+            result.Append(allowed.IndexOf(c) >= 0 ? c : ' ');
+
+        string collapsed = result.ToString();
+        while (collapsed.Contains("  "))
+            collapsed = collapsed.Replace("  ", " ");
+
+        return collapsed.Trim();
     }
 
-    float[] ConvertToFloats(byte[] data)
+    private float[] ConvertToFloats(byte[] data)
     {
         float[] f = new float[data.Length];
         for (int i = 0; i < data.Length; i++)
