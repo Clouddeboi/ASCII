@@ -1,19 +1,56 @@
-using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 
 public class Terminal : MonoBehaviour
 {
+    [Header("Panels")]
     public GameObject terminalPanel;
     public TMP_InputField inputField;
-    public TMP_Text historyText;
+
+    [Header("Display Areas")]
+    [SerializeField] private TMP_Text asciiArtText;
+    [SerializeField] private TMP_Text statusPanelText;
+
+    [Header("Components")]
     public Voice voice;
+    [SerializeField] private SpeechDetector speechDetector;
+    [SerializeField] private TerminalOutput output;
+    [SerializeField] private TerminalAudio audioController;
+    [SerializeField] private TerminalConfig config;
 
     private bool isOpen = false;
-    private List<string> commandHistory = new List<string>();
-    private int maxHistory = 10; //Show last 10 commands
+    private bool suppressTypingSound = false;
 
-    [SerializeField] private SpeechDetector speechDetector;
+    private readonly TerminalHistory history = new TerminalHistory();
+    private TerminalCommandRegistry commandRegistry;
+    private TerminalContext context;
+
+    public TerminalCommandRegistry CommandRegistry => commandRegistry;
+
+    void Awake()
+    {
+        commandRegistry = new TerminalCommandRegistry();
+        commandRegistry.Register(new SpeakCommand());
+        commandRegistry.Register(new HelpCommand());
+        commandRegistry.Register(new StatusCommand());
+        commandRegistry.Register(new PingCommand());
+        commandRegistry.Register(new OverrideCommand());
+        commandRegistry.Register(new ClearCommand());
+        commandRegistry.Register(new HistoryCommand());
+
+        context = new TerminalContext
+        {
+            Terminal = this,
+            Voice = voice,
+            SpeechDetector = speechDetector,
+            Output = output,
+            Audio = audioController,
+            History = history,
+        };
+
+        if (inputField != null)
+            inputField.onValueChanged.AddListener(OnInputValueChanged);
+    }
 
     void Update()
     {
@@ -30,24 +67,36 @@ public class Terminal : MonoBehaviour
             }
         }
 
+        if (!isOpen)
+            return;
+
         //Execute command with Enter
-        if (isOpen && Input.GetKeyDown(KeyCode.Return))
+        if (Input.GetKeyDown(KeyCode.Return))
         {
             string command = inputField.text;
             if (!string.IsNullOrEmpty(command))
             {
-                AddToHistory(command); //Save to history
-                HandleCommand(command);
+                history.Add(command);
+                ExecuteCommand(command);
             }
-
-            //Close terminal
-            CloseTerminal();
+            SetInputTextSilently("");
         }
-
         //Also allow Escape to close terminal
-        if (isOpen && Input.GetKeyDown(KeyCode.Escape))
+        else if (Input.GetKeyDown(KeyCode.Escape))
         {
             CloseTerminal();
+        }
+        else if (Input.GetKeyDown(KeyCode.UpArrow))
+        {
+            string previous = history.NavigatePrevious();
+            if (previous != null)
+                SetInputTextSilently(previous);
+        }
+        else if (Input.GetKeyDown(KeyCode.DownArrow))
+        {
+            string next = history.NavigateNext();
+            if (next != null)
+                SetInputTextSilently(next);
         }
     }
 
@@ -55,64 +104,110 @@ public class Terminal : MonoBehaviour
     {
         isOpen = true;
         terminalPanel.SetActive(true);
-        inputField.text = "";
+        SetInputTextSilently("");
         inputField.ActivateInputField(); //Focus input
-        
+
         //Change player state to Terminal
         PlayerStatesManager.Instance.SetState(PlayerStates.Terminal);
+
+        audioController?.PlayOpen();
+        RenderStatusPanel();
+        PlayBootSequence();
     }
 
     void CloseTerminal()
     {
         isOpen = false;
         terminalPanel.SetActive(false);
-        
+
         //Return to Default state
         if (PlayerStatesManager.Instance.IsInState(PlayerStates.Terminal))
         {
             PlayerStatesManager.Instance.SetState(PlayerStates.Default);
         }
+
+        audioController?.PlayClose();
     }
 
-    void HandleCommand(string command)
+    private void PlayBootSequence()
     {
-        string[] parts = command.Split(' ', 2);
-        string cmd = parts[0].ToLower(); //Case-insensitive
-        string args = parts.Length > 1 ? parts[1] : "";
+        if (config == null || config.bootMessages == null)
+            return;
 
-        switch (cmd)
+        foreach (string line in config.bootMessages)
+            output.PrintSystem(line);
+    }
+
+    private void RenderStatusPanel()
+    {
+        if (config == null)
+            return;
+
+        if (asciiArtText != null)
+            output.TypeIntoText(asciiArtText, config.asciiArt);
+
+        if (statusPanelText != null)
         {
-        case "/speak":
-            if (!string.IsNullOrEmpty(args))
-            {
-                bool success = voice.Speak(args);
-                if (success)
-                {
-                    speechDetector.NotifySpeech(gameObject, args);
-                }
-                else
-                {
-                    Debug.Log("Speech failed - NPCs won't hear garbled text");
-                }
-            }
-            break;
+            string randomMessage = config.randomStatusMessages != null && config.randomStatusMessages.Length > 0
+                ? config.randomStatusMessages[Random.Range(0, config.randomStatusMessages.Length)]
+                : "";
 
-            default:
-                Debug.Log("Unknown command: " + cmd);
-                break;
+            string statusText =
+                $"{config.terminalName} {config.terminalVersion}\n" +
+                $"USER: {config.currentUser}\n" +
+                $"CONNECTION: {config.connectionStatus}\n" +
+                $"STATUS: {config.systemStatus}\n" +
+                randomMessage;
+
+            output.TypeIntoText(statusPanelText, statusText);
         }
     }
 
-    void AddToHistory(string command)
+    private void ExecuteCommand(string rawCommand)
     {
-        //Add new command to history
-        commandHistory.Add(command);
+        output.Print("> " + rawCommand);
 
-        //Keep only last maxHistory commands
-        if (commandHistory.Count > maxHistory)
-            commandHistory.RemoveAt(0);
+        TerminalParser.ParsedCommand parsed = TerminalParser.Parse(rawCommand);
+        if (string.IsNullOrEmpty(parsed.CommandName))
+            return;
 
-        //Update UI
-        historyText.text = string.Join("\n", commandHistory);
+        if (commandRegistry.TryGet(parsed.CommandName, out ITerminalCommand command))
+        {
+            if (!command.IsUnlocked(context))
+            {
+                output.PrintError("COMMAND LOCKED: " + parsed.CommandName);
+                return;
+            }
+
+            command.Execute(parsed.Args, context);
+
+            if (command.ClosesTerminal)
+                CloseTerminal();
+
+            return;
+        }
+
+        int maxDistance = config != null ? config.suggestionMaxDistance : 2;
+        string suggestion = SpellCorrection.FindClosestCommand(parsed.CommandName, commandRegistry.AllTokens, maxDistance);
+
+        output.PrintError("UNKNOWN COMMAND: " + parsed.CommandName);
+        if (suggestion != null)
+            output.PrintError("DID YOU MEAN: " + suggestion + "?");
+    }
+
+    private void SetInputTextSilently(string text)
+    {
+        suppressTypingSound = true;
+        inputField.text = text;
+        inputField.caretPosition = text.Length;
+        suppressTypingSound = false;
+    }
+
+    private void OnInputValueChanged(string _)
+    {
+        if (suppressTypingSound)
+            return;
+
+        audioController?.PlayTyping();
     }
 }

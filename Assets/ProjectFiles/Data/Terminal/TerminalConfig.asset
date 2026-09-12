@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 300138e67c197074c8dfded411b90701, type: 3}
+  m_Name: TerminalConfig
+  m_EditorClassIdentifier: Assembly-CSharp::TerminalConfig
+  terminalName: NEXUS TERMINAL
+  terminalVersion: v2.7.1
+  bootMessages:
+  - INITIALIZING NEXUS TERMINAL...
+  - LOADING KERNEL MODULES...
+  - CONNECTION ESTABLISHED.
+  currentUser: GUEST
+  connectionStatus: LINKED
+  systemStatus: NOMINAL
+  randomStatusMessages:
+  - NO ANOMALIES DETECTED.
+  - 'SIGNAL INTEGRITY: STABLE.'
+  - AWAITING INPUT...
+  asciiArt: "  ___   ___  ___ ___ \n / _ \\ / __|/ __|_ _|\n| (_) |\\__ \\ (__ |
+    | \n \\___/ |___/\\___|___|"
+  systemTextColor: {r: 0, g: 1, b: 0, a: 1}
+  errorTextColor: {r: 1, g: 0, b: 0, a: 1}
+  responseTextColor: {r: 0, g: 1, b: 1, a: 1}
+  charactersPerSecond: 65
+  maxOutputLines: 40
+  suggestionMaxDistance: 2
