@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 using TMPro;
 
 public class Terminal : MonoBehaviour
@@ -54,8 +55,12 @@ public class Terminal : MonoBehaviour
 
     void Update()
     {
+        var keyboard = Keyboard.current;
+        if (keyboard == null)
+            return;
+
         //Toggle terminal with Tab (only if in Default state)
-        if (Input.GetKeyDown(KeyCode.Tab))
+        if (keyboard.tabKey.wasPressedThisFrame)
         {
             if (!isOpen && PlayerStatesManager.Instance.IsInState(PlayerStates.Default))
             {
@@ -71,7 +76,7 @@ public class Terminal : MonoBehaviour
             return;
 
         //Execute command with Enter
-        if (Input.GetKeyDown(KeyCode.Return))
+        if (keyboard.enterKey.wasPressedThisFrame || keyboard.numpadEnterKey.wasPressedThisFrame)
         {
             string command = inputField.text;
             if (!string.IsNullOrEmpty(command))
@@ -82,17 +87,17 @@ public class Terminal : MonoBehaviour
             SetInputTextSilently("");
         }
         //Also allow Escape to close terminal
-        else if (Input.GetKeyDown(KeyCode.Escape))
+        else if (keyboard.escapeKey.wasPressedThisFrame)
         {
             CloseTerminal();
         }
-        else if (Input.GetKeyDown(KeyCode.UpArrow))
+        else if (keyboard.upArrowKey.wasPressedThisFrame)
         {
             string previous = history.NavigatePrevious();
             if (previous != null)
                 SetInputTextSilently(previous);
         }
-        else if (Input.GetKeyDown(KeyCode.DownArrow))
+        else if (keyboard.downArrowKey.wasPressedThisFrame)
         {
             string next = history.NavigateNext();
             if (next != null)

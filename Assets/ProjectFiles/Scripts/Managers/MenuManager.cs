@@ -4,7 +4,7 @@ using UnityEngine.UI;
 public class MenuManager : MonoBehaviour
 {
     public GameObject menuPanel;
-    
+
     private bool isOpen = false;
 
     void Start()
@@ -16,8 +16,11 @@ public class MenuManager : MonoBehaviour
 
     void Update()
     {
+        if (InputManager.Instance == null)
+            return;
+
         // Toggle menu with Escape
-        if (Input.GetKeyDown(KeyCode.Escape))
+        if (InputManager.Instance.CancelAction.WasPressedThisFrame())
         {
             if (!isOpen && PlayerStatesManager.Instance.IsInState(PlayerStates.Default))
             {

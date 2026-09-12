@@ -10,9 +10,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 337c210a5ed87834fa3b6f3a269c08f3, type: 3}
-  m_Name: TestPreset
+  m_Name: PlayerVoiceNormal
   m_EditorClassIdentifier: Assembly-CSharp::VoicePreset
-  presetName: New Voice
+  presetName: PlayerVoice
   description: 
   samPitch: 64
   samSpeed: 72
@@ -23,9 +23,9 @@ MonoBehaviour:
   volume: 1
   effects:
     enableDistortion: 0
-    distortionLevel: 0.494
-    enableReverb: 1
-    reverbPreset: 21
+    distortionLevel: 0.5
+    enableReverb: 0
+    reverbPreset: 0
     reverbLevel: 0.766
     enableLowPass: 0
     lowPassCutoff: 5000
