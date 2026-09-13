@@ -328,6 +328,11 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: -0.000061035156}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 1}
+--- !u!1 &47716722 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: c416ce1723670694181b5bb220a05aea, type: 3}
+  m_PrefabInstance: {fileID: 1473839544}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &62488196
 GameObject:
   m_ObjectHideFlags: 0
@@ -3405,7 +3410,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 62579e3acb907ff409360afd10f58937, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerHandAnimator
-  handAnimator: {fileID: 0}
+  handAnimator: {fileID: 1473839546}
   handAudioSource: {fileID: 1205272525}
   failClip: {fileID: 0}
   lockedClip: {fileID: 0}
@@ -3433,7 +3438,7 @@ MonoBehaviour:
   interactableLayer:
     serializedVersion: 2
     m_Bits: 256
-  handAnimator: {fileID: 0}
+  handAnimator: {fileID: 631894071}
 --- !u!1 &690532309
 GameObject:
   m_ObjectHideFlags: 0
@@ -7454,15 +7459,15 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: c416ce1723670694181b5bb220a05aea, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0.57050186
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: c416ce1723670694181b5bb220a05aea, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -0.32403314
+      value: -0.3
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: c416ce1723670694181b5bb220a05aea, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0.68684
+      value: 0.6
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: c416ce1723670694181b5bb220a05aea, type: 3}
       propertyPath: m_LocalRotation.w
@@ -7492,20 +7497,125 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 75
       objectReference: {fileID: 0}
+    - target: {fileID: -4076101919493836276, guid: c416ce1723670694181b5bb220a05aea, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -0.00000093013534
+      objectReference: {fileID: 0}
+    - target: {fileID: -4076101919493836276, guid: c416ce1723670694181b5bb220a05aea, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.00097024936
+      objectReference: {fileID: 0}
+    - target: {fileID: -4076101919493836276, guid: c416ce1723670694181b5bb220a05aea, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0.00000006868505
+      objectReference: {fileID: 0}
+    - target: {fileID: -3990056280812398217, guid: c416ce1723670694181b5bb220a05aea, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -0.00025244898
+      objectReference: {fileID: 0}
+    - target: {fileID: -3990056280812398217, guid: c416ce1723670694181b5bb220a05aea, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.0025747877
+      objectReference: {fileID: 0}
+    - target: {fileID: -3990056280812398217, guid: c416ce1723670694181b5bb220a05aea, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0.000056099692
+      objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: c416ce1723670694181b5bb220a05aea, type: 3}
       propertyPath: m_Name
       value: HandPoseSupport
       objectReference: {fileID: 0}
+    - target: {fileID: 1140707643644296232, guid: c416ce1723670694181b5bb220a05aea, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0.0000009445025
+      objectReference: {fileID: 0}
+    - target: {fileID: 1140707643644296232, guid: c416ce1723670694181b5bb220a05aea, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.001407796
+      objectReference: {fileID: 0}
+    - target: {fileID: 1140707643644296232, guid: c416ce1723670694181b5bb220a05aea, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0.000017454966
+      objectReference: {fileID: 0}
+    - target: {fileID: 4232209191905441259, guid: c416ce1723670694181b5bb220a05aea, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -0.00094936823
+      objectReference: {fileID: 0}
+    - target: {fileID: 4232209191905441259, guid: c416ce1723670694181b5bb220a05aea, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0.0001665314
+      objectReference: {fileID: 0}
+    - target: {fileID: 4630141237095514454, guid: c416ce1723670694181b5bb220a05aea, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0.000007561074
+      objectReference: {fileID: 0}
+    - target: {fileID: 4630141237095514454, guid: c416ce1723670694181b5bb220a05aea, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.000727252
+      objectReference: {fileID: 0}
+    - target: {fileID: 4630141237095514454, guid: c416ce1723670694181b5bb220a05aea, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0.0000030825026
+      objectReference: {fileID: 0}
+    - target: {fileID: 7518406754501482608, guid: c416ce1723670694181b5bb220a05aea, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0.0000000011854303
+      objectReference: {fileID: 0}
+    - target: {fileID: 7518406754501482608, guid: c416ce1723670694181b5bb220a05aea, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.0030672324
+      objectReference: {fileID: 0}
+    - target: {fileID: 7518406754501482608, guid: c416ce1723670694181b5bb220a05aea, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0.0000000036670826
+      objectReference: {fileID: 0}
+    - target: {fileID: 8161976457011763264, guid: c416ce1723670694181b5bb220a05aea, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -0.0000017811255
+      objectReference: {fileID: 0}
+    - target: {fileID: 8161976457011763264, guid: c416ce1723670694181b5bb220a05aea, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.0013155472
+      objectReference: {fileID: 0}
+    - target: {fileID: 8161976457011763264, guid: c416ce1723670694181b5bb220a05aea, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0.000011665313
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: c416ce1723670694181b5bb220a05aea, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1473839546}
   m_SourcePrefab: {fileID: 100100000, guid: c416ce1723670694181b5bb220a05aea, type: 3}
 --- !u!4 &1473839545 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: c416ce1723670694181b5bb220a05aea, type: 3}
   m_PrefabInstance: {fileID: 1473839544}
   m_PrefabAsset: {fileID: 0}
+--- !u!95 &1473839546
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 47716722}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 0aa7e9957ad4c4c47adb27b92fd0ffd9, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!4 &1473928247 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 7767d139b720eba4ab3bdb5d59f498f3, type: 3}
@@ -7986,9 +8096,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cdfd9ca4ad743734dbb63aa192389272, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DoorInteractable
-  interactableId: door
+  interactableId: Interact_Lever
   displayName: Door
-  type: 1
+  type: 5
   mode: 0
   lockState: 2
   requiredCode: 
@@ -10606,7 +10716,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4b1b0ed03c3f5684bbd557764db95834, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ItemPickupInteractable
-  interactableId: testItem
+  interactableId: Interact_Generic
   displayName: TestItem
   type: 6
   mode: 0
