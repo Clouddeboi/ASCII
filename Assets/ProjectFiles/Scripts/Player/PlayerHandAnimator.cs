@@ -20,7 +20,8 @@ public class PlayerHandAnimator : MonoBehaviour
         "Interact_Box",
         "Interact_Button",
         "Interact_Lever",
-        "Interact_Container"
+        "Interact_Container",
+        "Interact_Item"
     };
 
     public void PlayInteract(InteractionType type)

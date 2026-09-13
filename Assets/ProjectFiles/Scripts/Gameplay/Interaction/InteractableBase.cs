@@ -24,6 +24,7 @@ public abstract class InteractableBase : MonoBehaviour, IInteractable
 
     public string InteractableId => interactableId;
     public string DisplayName => displayName;
+    public virtual string InteractVerb => "Interact";
     public InteractionType Type => type;
     public InteractionMode Mode => mode;
     public LockState CurrentLock => lockState;
@@ -58,7 +59,7 @@ public abstract class InteractableBase : MonoBehaviour, IInteractable
                 PlayLockedSfx();
                 return InteractResult.LockedCode;
             case LockState.Key:
-                if (!KeyInventory.HasKey(requiredKeyId))
+                if (!Inventory.HasItem(requiredKeyId))
                 {
                     PlayLockedSfx();
                     return InteractResult.LockedKey;
@@ -102,7 +103,7 @@ public abstract class InteractableBase : MonoBehaviour, IInteractable
                 HackSessionState.BeginCodeChallenge(this);
                 return HackResult.RequiresCode;
             case LockState.Key:
-                if (!KeyInventory.HasKey(requiredKeyId))
+                if (!Inventory.HasItem(requiredKeyId))
                 {
                     PlayLockedSfx();
                     return HackResult.RequiresKey;

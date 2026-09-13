@@ -119,6 +119,8 @@ public class PlayerStatesManager : MonoBehaviour
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
         Time.timeScale = 0f; // Pause game
+        playerCam.enabled = false;
+        playerMovement.enabled = false;
     }
 
     private void EnterTerminalState()

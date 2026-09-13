@@ -5,6 +5,7 @@ public interface IInteractable
 {
     string InteractableId { get; } //Matched against /hack <id>, e.g. "door"
     string DisplayName { get; }
+    string InteractVerb { get; } //Prompt verb, e.g. "Interact" or "Pick up"
     InteractionType Type { get; }
     InteractionMode Mode { get; }
     LockState CurrentLock { get; }

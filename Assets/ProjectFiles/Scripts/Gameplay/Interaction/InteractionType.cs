@@ -6,5 +6,6 @@ public enum InteractionType
     Box,
     Button,
     Lever,
-    Container
+    Container,
+    Item
 }

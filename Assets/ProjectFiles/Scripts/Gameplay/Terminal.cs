@@ -40,6 +40,7 @@ public class Terminal : MonoBehaviour
         commandRegistry.Register(new HistoryCommand());
         commandRegistry.Register(new HackCommand());
         commandRegistry.Register(new CodeCommand());
+        commandRegistry.Register(new EquipmentCommand());
 
         context = new TerminalContext
         {

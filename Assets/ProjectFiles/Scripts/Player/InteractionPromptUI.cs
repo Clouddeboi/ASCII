@@ -51,7 +51,7 @@ public class InteractionPromptUI : MonoBehaviour
             return;
         }
 
-        ShowPrompt($"[{interactKeyLabel}] {target.DisplayName}");
+        ShowPrompt($"[{interactKeyLabel}] {target.InteractVerb} {target.DisplayName}");
     }
 
     private void HandleInteractResult(IInteractable target, InteractResult result)

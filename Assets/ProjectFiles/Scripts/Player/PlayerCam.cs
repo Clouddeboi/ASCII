@@ -18,9 +18,12 @@ public class PlayerCam : MonoBehaviour
 
     private void Update()
     {
+        //Mouse Delta from the Input System is already a per-frame delta; multiplying by Time.deltaTime
+        //on top of it double-dips, so any frame hitch (e.g. spiked deltaTime while a UI prompt toggles)
+        //produces a visible jolt instead of a smooth turn.
         Vector2 lookInput = InputManager.Instance.LookAction.ReadValue<Vector2>();
-        float mouseX = lookInput.x * Time.deltaTime * sensX;
-        float mouseY = lookInput.y * Time.deltaTime * sensY;
+        float mouseX = lookInput.x * sensX;
+        float mouseY = lookInput.y * sensY;
 
         yRotation += mouseX;
 
