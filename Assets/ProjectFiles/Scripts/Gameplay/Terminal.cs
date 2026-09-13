@@ -38,6 +38,8 @@ public class Terminal : MonoBehaviour
         commandRegistry.Register(new OverrideCommand());
         commandRegistry.Register(new ClearCommand());
         commandRegistry.Register(new HistoryCommand());
+        commandRegistry.Register(new HackCommand());
+        commandRegistry.Register(new CodeCommand());
 
         context = new TerminalContext
         {

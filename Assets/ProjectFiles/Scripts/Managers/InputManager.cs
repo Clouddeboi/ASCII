@@ -1,7 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-// Central access point for the generated Input Actions asset (new Input System).
 public class InputManager : MonoBehaviour
 {
     public static InputManager Instance { get; private set; }
@@ -13,6 +12,7 @@ public class InputManager : MonoBehaviour
     public InputAction JumpAction { get; private set; }
     public InputAction SprintAction { get; private set; }
     public InputAction CancelAction { get; private set; }
+    public InputAction InteractAction { get; private set; }
 
     private void Awake()
     {
@@ -32,6 +32,7 @@ public class InputManager : MonoBehaviour
         JumpAction = playerMap.FindAction("Jump");
         SprintAction = playerMap.FindAction("Sprint");
         CancelAction = uiMap.FindAction("Cancel");
+        InteractAction = playerMap.FindAction("Interact");
     }
 
     private void OnEnable()
