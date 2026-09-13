@@ -554,7 +554,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 104609383}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Terrain
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3323,7 +3323,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerMovement
   moveSpeed: 4
   groundDrag: 5
-  jumpForce: 0
+  jumpForce: 2
   jumpCooldown: 0
   airMultiplier: 0
   walkSpeed: 0
@@ -3332,6 +3332,9 @@ MonoBehaviour:
   whatIsGround:
     serializedVersion: 2
     m_Bits: 64
+  handAnimator: {fileID: 631894071}
+  runAnimationSpeedThreshold: 0.5
+  fallVelocityThreshold: -1
   orientation: {fileID: 1389177368}
 --- !u!114 &631894067
 MonoBehaviour:
@@ -3414,6 +3417,10 @@ MonoBehaviour:
   handAudioSource: {fileID: 1205272525}
   failClip: {fileID: 0}
   lockedClip: {fileID: 0}
+  runningParam: IsRunning
+  jumpTrigger: Jump
+  fallingParam: IsFalling
+  groundedParam: IsGrounded
   triggersByType:
   - Interact_Generic
   - Interact_Door

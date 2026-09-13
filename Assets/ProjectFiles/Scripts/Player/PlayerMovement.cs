@@ -22,6 +22,12 @@ public class PlayerMovement : MonoBehaviour
     public float playerHeight;
     public LayerMask whatIsGround;
     bool grounded;
+    bool wasGrounded;
+
+    [Header("Animation")]
+    [SerializeField] private PlayerHandAnimator handAnimator;
+    [SerializeField] private float runAnimationSpeedThreshold = 0.5f;
+    [SerializeField] private float fallVelocityThreshold = -1f;
 
     public Transform orientation;
 
@@ -38,6 +44,7 @@ public class PlayerMovement : MonoBehaviour
         rb.freezeRotation = true;
 
         readyToJump = true;
+        wasGrounded = true;
     }
 
     private void Update()
@@ -47,12 +54,33 @@ public class PlayerMovement : MonoBehaviour
 
         MyInput();
         SpeedControl();
+        UpdateAnimationState();
 
         // handle drag
         if (grounded)
             rb.linearDamping = groundDrag;
         else
             rb.linearDamping = 0;
+
+        wasGrounded = grounded;
+    }
+
+    private void UpdateAnimationState()
+    {
+        if (handAnimator == null) return;
+
+        Vector3 flatVel = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
+        bool isMovingOnGround = grounded && flatVel.magnitude > runAnimationSpeedThreshold;
+        handAnimator.SetRunning(isMovingOnGround);
+
+        handAnimator.SetGrounded(grounded);
+
+        bool isFalling = !grounded && rb.linearVelocity.y < fallVelocityThreshold;
+        handAnimator.SetFalling(isFalling);
+
+        //Just landed after being airborne
+        if (grounded && !wasGrounded)
+            handAnimator.SetFalling(false);
     }
 
     private void FixedUpdate()
@@ -109,6 +137,8 @@ public class PlayerMovement : MonoBehaviour
         rb.linearVelocity = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
 
         rb.AddForce(transform.up * jumpForce, ForceMode.Impulse);
+
+        handAnimator?.PlayJump();
     }
     private void ResetJump()
     {
