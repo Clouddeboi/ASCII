@@ -100,5 +100,12 @@ public static class Inventory
         }
     }
 
+    //Used when restoring a save - clears all held items before re-adding what the save contains.
+    public static void Clear()
+    {
+        stacks.Clear();
+        OnChanged?.Invoke();
+    }
+
     private static int Mathf_Min(int a, int b) => a < b ? a : b;
 }

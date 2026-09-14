@@ -58,4 +58,12 @@ public class PlayerHealth : MonoBehaviour, IKillable
     {
         SetHealth(0f);
     }
+
+    //Used by save/load and checkpoint respawn to set both values directly without side effects like camera trauma.
+    public void SetHealthDirect(float current, float max)
+    {
+        maxHealth = max;
+        currentHealth = Mathf.Clamp(current, 0f, maxHealth);
+        OnHealthChanged?.Invoke(currentHealth, maxHealth);
+    }
 }
