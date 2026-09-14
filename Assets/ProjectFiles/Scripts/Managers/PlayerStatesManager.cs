@@ -10,6 +10,7 @@ public class PlayerStatesManager : MonoBehaviour
     [Header("------Player Scripts------")]
     [SerializeField] PlayerCam playerCam;
     [SerializeField] PlayerMovement playerMovement;
+    [SerializeField] PlayerCameraEffects playerCameraEffects;
 
     // Events for state changes
     public event Action<PlayerStates, PlayerStates> OnStateChanged;
@@ -112,6 +113,7 @@ public class PlayerStatesManager : MonoBehaviour
         StartCoroutine(LockCursorDelayed());
         playerCam.enabled = true;
         playerMovement.enabled = true;
+        if (playerCameraEffects != null) playerCameraEffects.enabled = true;
     }
 
     private void EnterMenuState()
@@ -121,6 +123,7 @@ public class PlayerStatesManager : MonoBehaviour
         Time.timeScale = 0f; // Pause game
         playerCam.enabled = false;
         playerMovement.enabled = false;
+        if (playerCameraEffects != null) playerCameraEffects.enabled = false;
     }
 
     private void EnterTerminalState()
@@ -129,6 +132,7 @@ public class PlayerStatesManager : MonoBehaviour
         Cursor.visible = false;
         playerCam.enabled = false;
         playerMovement.enabled = false;
+        if (playerCameraEffects != null) playerCameraEffects.enabled = false;
     }
 
     private void EnterNPCState()

@@ -9,6 +9,9 @@ public class PlayerHealth : MonoBehaviour, IKillable
     [SerializeField] private float maxHealth = 100f;
     [SerializeField] private float currentHealth = 100f;
 
+    [Header("Damage Camera Shake")]
+    [SerializeField] private float damageTrauma = 0.3f;
+
     public event Action<float, float> OnHealthChanged;
     public event Action OnDeath;
 
@@ -31,6 +34,7 @@ public class PlayerHealth : MonoBehaviour, IKillable
     {
         if (amount <= 0f || IsDead) return;
         SetHealth(currentHealth - amount);
+        PlayerCameraEffects.Instance?.AddTrauma(damageTrauma);
     }
 
     public void Heal(float amount)

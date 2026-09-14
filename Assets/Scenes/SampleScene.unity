@@ -3323,18 +3323,26 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerMovement
   moveSpeed: 4
   groundDrag: 5
-  jumpForce: 2
+  jumpForce: 8
   jumpCooldown: 0
-  airMultiplier: 0
+  airMultiplier: 0.5
+  coyoteTime: 0.15
+  jumpBufferTime: 0.15
   walkSpeed: 0
   sprintSpeed: 0
   playerHeight: 2
   whatIsGround:
     serializedVersion: 2
     m_Bits: 64
+  maxSlopeAngle: 45
+  slopeStickForce: 10
+  slideForce: 20
+  slideControlMultiplier: 0.3
   handAnimator: {fileID: 631894071}
   runAnimationSpeedThreshold: 0.5
   fallVelocityThreshold: -1
+  hardLandingFallSpeed: 10
+  hardLandingTrauma: 0.5
   orientation: {fileID: 1389177368}
 --- !u!114 &631894067
 MonoBehaviour:
@@ -3401,6 +3409,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerHealth
   maxHealth: 100
   currentHealth: 50
+  damageTrauma: 0.3
 --- !u!114 &631894071
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8086,8 +8095,8 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0.44, y: 1.05, z: 7.53}
-  m_LocalScale: {x: 2, y: 2, z: 2}
-  m_ConstrainProportionsScale: 1
+  m_LocalScale: {x: 2, y: 8.4332, z: 2}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -9499,6 +9508,119 @@ MonoBehaviour:
   currentState: 0
   playerCam: {fileID: 330585548}
   playerMovement: {fileID: 631894066}
+  playerCameraEffects: {fileID: 0}
+--- !u!1 &1756476397
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1756476401}
+  - component: {fileID: 1756476400}
+  - component: {fileID: 1756476399}
+  - component: {fileID: 1756476398}
+  m_Layer: 6
+  m_Name: Slope
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!65 &1756476398
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1756476397}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1, y: 1, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!23 &1756476399
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1756476397}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  m_AdditionalVertexStreams: {fileID: 0}
+--- !u!33 &1756476400
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1756476397}
+  m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!4 &1756476401
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1756476397}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0.23149651, w: 0.9728358}
+  m_LocalPosition: {x: -12.96, y: 1.22, z: 4.79883}
+  m_LocalScale: {x: 9.7541, y: 1, z: 6.0125}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: -26.77}
 --- !u!1 &1757817840
 GameObject:
   m_ObjectHideFlags: 0
@@ -10618,7 +10740,7 @@ CapsuleCollider:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2030538232}
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 13400000, guid: df07894757be3154d810503aa71490fc, type: 2}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -11581,6 +11703,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2117142527}
   - component: {fileID: 2117142528}
+  - component: {fileID: 2117142529}
   m_Layer: 0
   m_Name: CameraHolder
   m_TagString: Untagged
@@ -11617,6 +11740,32 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MoveCamera
   cameraPosition: {fileID: 295721597}
+--- !u!114 &2117142529
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2117142526}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c5084b67dd0c13843bbd58908abe6ab2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerCameraEffects
+  playerMovement: {fileID: 631894066}
+  headBobEnabled: 1
+  bobFrequency: 1.8
+  bobVerticalAmplitude: 0.05
+  bobHorizontalAmplitude: 0.035
+  bobSmoothing: 8
+  minSpeedForBob: 0.5
+  bobIntensity: 1
+  cameraShakeEnabled: 1
+  traumaDecayPerSecond: 1.2
+  maxShakeAngle: 4
+  maxShakePositionOffset: 0.08
+  shakeNoiseFrequency: 20
+  shakeIntensity: 1
 --- !u!1 &2118445590
 GameObject:
   m_ObjectHideFlags: 0
@@ -11869,3 +12018,4 @@ SceneRoots:
   - {fileID: 104609383}
   - {fileID: 1570157727}
   - {fileID: 2045208170}
+  - {fileID: 1756476401}
