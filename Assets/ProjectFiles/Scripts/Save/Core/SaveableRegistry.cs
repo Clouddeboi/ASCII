@@ -8,6 +8,13 @@ public class SaveableRegistry : MonoBehaviour
     private static SaveableRegistry instance;
     private static bool shuttingDown;
 
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetStatics()
+    {
+        instance = null;
+        shuttingDown = false;
+    }
+
     public static SaveableRegistry Instance
     {
         get

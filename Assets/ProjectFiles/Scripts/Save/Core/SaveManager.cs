@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -12,6 +13,13 @@ public class SaveManager : MonoBehaviour
 {
     private static SaveManager instance;
     private static bool shuttingDown;
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetStatics()
+    {
+        instance = null;
+        shuttingDown = false;
+    }
 
     public static SaveManager Instance
     {
@@ -35,6 +43,9 @@ public class SaveManager : MonoBehaviour
 
     [Header("Auto-Save")]
     [SerializeField] private float minAutoSaveIntervalSeconds = 30f;
+
+    [Header("Scene Transition")]
+    [SerializeField] private float fadeDuration = 0.5f;
 
     private const string SaveFolderName = "Saves";
 
@@ -145,7 +156,8 @@ public class SaveManager : MonoBehaviour
         return WriteSaveFile(CurrentSlotId, data);
     }
 
-    //Loads slotId, switching scenes first if required, then applies player/world state once the scene is ready.
+    //Loads slotId, fading to black first, switching scenes if required, then applying player/world state and
+    //fading back in once the scene is ready. Used for manual loads and the pause menu's "Load" button.
     public void LoadGame(string slotId, Action onComplete = null)
     {
         if (!TryReadSaveFile(slotId, out SaveGameData data))
@@ -155,6 +167,11 @@ public class SaveManager : MonoBehaviour
             return;
         }
 
+        ScreenFader.Instance?.FadeOut(fadeDuration, () => BeginLoad(slotId, data, onComplete));
+    }
+
+    private void BeginLoad(string slotId, SaveGameData data, Action onComplete)
+    {
         CurrentSlotId = slotId;
         sessionStartTime = Time.realtimeSinceStartup;
         pickedUpItems.Clear();
@@ -164,8 +181,7 @@ public class SaveManager : MonoBehaviour
         if (string.IsNullOrEmpty(targetScene) || SceneManager.GetActiveScene().name == targetScene)
         {
             ApplySaveData(data);
-            onComplete?.Invoke();
-            OnLoadCompleted?.Invoke(slotId);
+            FinishLoad(slotId, onComplete);
             return;
         }
 
@@ -173,12 +189,41 @@ public class SaveManager : MonoBehaviour
         {
             SceneManager.sceneLoaded -= OnSceneLoaded;
             ApplySaveData(data);
-            onComplete?.Invoke();
-            OnLoadCompleted?.Invoke(slotId);
+            FinishLoad(slotId, onComplete);
         }
 
         SceneManager.sceneLoaded += OnSceneLoaded;
         SceneManager.LoadScene(targetScene);
+    }
+
+    private void FinishLoad(string slotId, Action onComplete)
+    {
+        ScreenFader.Instance?.FadeIn(fadeDuration, () =>
+        {
+            onComplete?.Invoke();
+            OnLoadCompleted?.Invoke(slotId);
+        });
+    }
+
+    //Creates a fresh slot and starts play, fading to black across the scene load like LoadGame does.
+    public bool StartNewGame(string slotId, string saveName, string startingSceneName)
+    {
+        if (!NewGame(slotId, saveName, startingSceneName))
+            return false;
+
+        ScreenFader.Instance?.FadeOut(fadeDuration, () =>
+        {
+            void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+            {
+                SceneManager.sceneLoaded -= OnSceneLoaded;
+                ScreenFader.Instance?.FadeIn(fadeDuration);
+            }
+
+            SceneManager.sceneLoaded += OnSceneLoaded;
+            SceneManager.LoadScene(startingSceneName);
+        });
+
+        return true;
     }
 
     public bool DeleteSave(string slotId)
@@ -233,9 +278,16 @@ public class SaveManager : MonoBehaviour
         {
             data.currentHealth = PlayerHealth.Instance.CurrentHealth;
             data.maxHealth = PlayerHealth.Instance.MaxHealth;
-            Transform playerTransform = PlayerHealth.Instance.transform;
-            data.position = playerTransform.position;
-            data.rotation = playerTransform.rotation;
+            //Root, not PlayerHealth's own transform - the movement body, look orientation and camera anchor
+            //are separate sibling children under one root, so only moving the shared root keeps them in sync.
+            Transform playerRoot = PlayerHealth.Instance.transform.root;
+            data.position = playerRoot.position;
+            data.rotation = playerRoot.rotation;
+            Debug.Log($"[SaveManager] Captured player position {data.position}, rotation {data.rotation.eulerAngles} (root '{playerRoot.name}').");
+        }
+        else
+        {
+            Debug.LogWarning("[SaveManager] PlayerHealth.Instance not found while saving - position/health not captured.");
         }
 
         data.inventory.Clear();
@@ -261,29 +313,30 @@ public class SaveManager : MonoBehaviour
 
         data.pickedUpItems = pickedUpItems.ToList();
 
-        data.saveableStates.Clear();
+        //Merge rather than replace: only the currently loaded scene's ISaveables are registered right now,
+        //so entries belonging to other scenes the player has visited must be preserved, not wiped out.
+        Dictionary<string, SaveableStateEntry> statesById = data.saveableStates.ToDictionary(e => e.saveId);
+
         if (SaveableRegistry.Instance != null)
         {
             foreach (ISaveable saveable in SaveableRegistry.Instance.AllSaveables)
             {
-                data.saveableStates.Add(new SaveableStateEntry
+                statesById[saveable.SaveId] = new SaveableStateEntry
                 {
                     saveId = saveable.SaveId,
                     json = saveable.CaptureState()
-                });
+                };
             }
         }
+
+        data.saveableStates = statesById.Values.ToList();
 
         return data;
     }
 
     private void ApplySaveData(SaveGameData data)
     {
-        if (PlayerHealth.Instance != null)
-        {
-            PlayerHealth.Instance.SetHealthDirect(data.player.currentHealth, data.player.maxHealth);
-            PlayerTeleportUtility.Teleport(PlayerHealth.Instance.transform, data.player.position, data.player.rotation);
-        }
+        ApplyPlayerTransformAndHealth(data.player);
 
         Inventory.Clear();
         if (ItemDatabase.Instance != null)
@@ -316,6 +369,57 @@ public class SaveManager : MonoBehaviour
                     saveable.RestoreState(json);
             }
         }
+    }
+
+    //PlayerHealth.Instance should already be set by the time this runs (SceneManager.sceneLoaded fires after
+    //Awake/OnEnable of the new scene's objects), but retries across a few frames as a safety net in case
+    //some other script's Awake/Start ordering delays it.
+    private void ApplyPlayerTransformAndHealth(PlayerSaveData playerData)
+    {
+        if (PlayerHealth.Instance != null)
+        {
+            RestorePlayerTransformAndHealth(playerData);
+            return;
+        }
+
+        StartCoroutine(ApplyPlayerTransformAndHealthDeferred(playerData));
+    }
+
+    private IEnumerator ApplyPlayerTransformAndHealthDeferred(PlayerSaveData playerData)
+    {
+        int attempts = 0;
+        while (PlayerHealth.Instance == null && attempts < 30)
+        {
+            attempts++;
+            yield return null;
+        }
+
+        if (PlayerHealth.Instance == null)
+        {
+            Debug.LogError("[SaveManager] PlayerHealth.Instance never became available - could not restore player position/health.");
+            yield break;
+        }
+
+        RestorePlayerTransformAndHealth(playerData);
+    }
+
+    private void RestorePlayerTransformAndHealth(PlayerSaveData playerData)
+    {
+        //PlayerMovement co-location check (health/movement should be on the same GameObject).
+        Transform playerTransform = PlayerHealth.Instance.transform;
+        if (playerTransform.GetComponent<PlayerMovement>() == null)
+        {
+            Debug.LogWarning($"[SaveManager] PlayerHealth is on '{playerTransform.name}' but PlayerMovement is not on that same GameObject.");
+        }
+
+        //Teleport the shared root, not PlayerHealth's own transform - the movement body, look orientation
+        //and camera anchor are separate sibling children, so only the root move keeps them all in sync.
+        Transform playerRoot = playerTransform.root;
+
+        PlayerHealth.Instance.SetHealthDirect(playerData.currentHealth, playerData.maxHealth);
+        PlayerTeleportUtility.Teleport(playerRoot, playerData.position, playerData.rotation);
+        Debug.Log($"[SaveManager] Restored player to position {playerData.position}, rotation {playerData.rotation.eulerAngles} (root '{playerRoot.name}'). " +
+            $"Transform after teleport: {playerRoot.position}.");
     }
 
     private bool TryReadSaveFile(string slotId, out SaveGameData data)

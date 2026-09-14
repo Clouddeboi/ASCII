@@ -1,14 +1,13 @@
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 public class MainMenuManager : MonoBehaviour
 {
     [Header("Root Panel")]
     [SerializeField] private GameObject mainPanel;
 
-    [Header("Scene Loading")]
-    [SerializeField] private string gameSceneName = "Game";
+    [Header("Save Slot Panel")]
+    [SerializeField] private GameObject saveSlotPanel;
 
     private readonly Stack<GameObject> panelStack = new Stack<GameObject>();
 
@@ -56,7 +55,7 @@ public class MainMenuManager : MonoBehaviour
 
     public void OnPlayClicked()
     {
-        SceneManager.LoadScene(gameSceneName);
+        OpenPanel(saveSlotPanel);
     }
 
     public void OnExitClicked()

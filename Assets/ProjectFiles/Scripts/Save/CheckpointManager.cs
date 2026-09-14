@@ -7,6 +7,13 @@ public class CheckpointManager : MonoBehaviour
     private static CheckpointManager instance;
     private static bool shuttingDown;
 
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetStatics()
+    {
+        instance = null;
+        shuttingDown = false;
+    }
+
     public static CheckpointManager Instance
     {
         get
@@ -69,7 +76,8 @@ public class CheckpointManager : MonoBehaviour
         if (!HasCheckpoint || PlayerHealth.Instance == null)
             return;
 
-        PlayerTeleportUtility.Teleport(PlayerHealth.Instance.transform, CheckpointPosition, CheckpointRotation);
+        //Teleport the shared root, not PlayerHealth's own transform - see SaveManager.RestorePlayerTransformAndHealth.
+        PlayerTeleportUtility.Teleport(PlayerHealth.Instance.transform.root, CheckpointPosition, CheckpointRotation);
         PlayerHealth.Instance.SetHealthDirect(PlayerHealth.Instance.MaxHealth, PlayerHealth.Instance.MaxHealth);
     }
 }

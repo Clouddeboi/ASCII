@@ -9,13 +9,20 @@ public static class PlayerTeleportUtility
         if (playerTransform == null)
             return;
 
-        var rb = playerTransform.GetComponent<Rigidbody>();
+        playerTransform.SetPositionAndRotation(position, rotation);
+
+        //A non-kinematic Rigidbody on a CHILD (e.g. "PlayerObj" under a "Player" root) doesn't reliably follow
+        //a moved ancestor transform - PhysX can snap it back to its last simulated position on the next
+        //FixedUpdate. Explicitly push the (now-updated-by-the-parent-move) world transform into the Rigidbody
+        //itself and force an immediate sync so physics doesn't undo the move.
+        var rb = playerTransform.GetComponentInChildren<Rigidbody>();
         if (rb != null)
         {
             rb.linearVelocity = Vector3.zero;
             rb.angularVelocity = Vector3.zero;
+            rb.position = rb.transform.position;
+            rb.rotation = rb.transform.rotation;
+            Physics.SyncTransforms();
         }
-
-        playerTransform.SetPositionAndRotation(position, rotation);
     }
 }
