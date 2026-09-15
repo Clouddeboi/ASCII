@@ -35,6 +35,9 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float slopeStickForce = 80f;
     [SerializeField] private float slideForce = 20f;
     [SerializeField] private float slideControlMultiplier = 0.3f;
+    [SerializeField] private float maxSlideSpeed = 40f;
+    [SerializeField] private float slopeCheckRadius = 0.25f;
+    [SerializeField] private bool debugSlopeLogging = false;
     RaycastHit slopeHit;
     bool onSlope;
     bool onSteepSlope;
@@ -44,6 +47,9 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private PlayerHandAnimator handAnimator;
     [SerializeField] private float runAnimationSpeedThreshold = 0.5f;
     [SerializeField] private float fallVelocityThreshold = -1f;
+
+    [Header("Audio")]
+    [SerializeField] private PlayerAudioController audioController;
 
     [Header("Landing Camera Shake")]
     [SerializeField] private float hardLandingFallSpeed = 10f;
@@ -63,6 +69,8 @@ public class PlayerMovement : MonoBehaviour
     public bool IsGrounded => grounded;
     public float FlatSpeed => new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z).magnitude;
     public float MoveSpeed => moveSpeed;
+    public float VerticalVelocity => rb.linearVelocity.y;
+    public bool IsOnSteepSlope => onSteepSlope;
 
     private void Start()
     {
@@ -73,6 +81,14 @@ public class PlayerMovement : MonoBehaviour
         wasGrounded = true;
     }
 
+    //Disabling this script (e.g. entering Terminal state) stops FixedUpdate/drag, so nothing would otherwise counter existing horizontal velocity - cancel just the horizontal drift so the player doesn't keep sliding, without freezing gravity/vertical motion (a jump/fall completes naturally).
+    private void OnDisable()
+    {
+        if (rb == null) return;
+        rb.linearVelocity = new Vector3(0f, rb.linearVelocity.y, 0f);
+        rb.angularVelocity = Vector3.zero;
+    }
+
     private void Update()
     {
         // ground check
@@ -81,6 +97,7 @@ public class PlayerMovement : MonoBehaviour
         MyInput();
         SpeedControl();
         UpdateAnimationState();
+        audioController?.UpdateFootsteps(grounded, FlatSpeed, moveSpeed);
 
         // handle drag
         if (grounded)
@@ -99,8 +116,11 @@ public class PlayerMovement : MonoBehaviour
         //Just landed after being airborne
         if (grounded && !wasGrounded)
         {
-            if (fallSpeedBeforeLanding >= hardLandingFallSpeed)
+            bool hardLanding = fallSpeedBeforeLanding >= hardLandingFallSpeed;
+            if (hardLanding)
                 PlayerCameraEffects.Instance?.AddTrauma(hardLandingTrauma);
+
+            audioController?.PlayLand(hardLanding);
 
             fallSpeedBeforeLanding = 0f;
         }
@@ -126,19 +146,26 @@ public class PlayerMovement : MonoBehaviour
         MovePlayer();
     }
 
-    //Raycasts straight down from the player to classify the ground under them as flat/walkable slope/too-steep-to-stand-on.
+    //SphereCasts down from the player to classify the ground as flat/walkable slope/too-steep-to-stand-on.
+    //A sphere (rather than a thin ray) avoids false "steep" readings from catching a stair riser's near-vertical edge.
     private void CheckSlope()
     {
-        if (Physics.Raycast(transform.position, Vector3.down, out slopeHit, playerHeight * 0.5f + 0.5f, whatIsGround))
+        if (Physics.SphereCast(transform.position, slopeCheckRadius, Vector3.down, out slopeHit, playerHeight * 0.5f + 0.5f, whatIsGround))
         {
             float angle = Vector3.Angle(Vector3.up, slopeHit.normal);
-            onSlope = angle < maxSlopeAngle && angle != 0f;
+            onSlope = angle <= maxSlopeAngle && angle != 0f;
             onSteepSlope = angle > maxSlopeAngle;
+
+            if (debugSlopeLogging)
+                Debug.Log($"[Slope] angle={angle:F1} onSlope={onSlope} onSteepSlope={onSteepSlope} grounded={grounded} speed={rb.linearVelocity.magnitude:F2} vel={rb.linearVelocity}");
         }
         else
         {
             onSlope = false;
             onSteepSlope = false;
+
+            if (debugSlopeLogging)
+                Debug.Log($"[Slope] no ground hit - grounded={grounded} speed={rb.linearVelocity.magnitude:F2}");
         }
     }
 
@@ -201,6 +228,10 @@ public class PlayerMovement : MonoBehaviour
             if (rb.linearVelocity.y > 0f)
                 rb.AddForce(Vector3.down * slopeStickForce, ForceMode.Force);
 
+            //Cancels gravity's component running down along the slope surface so walkable slopes/stairs don't slowly slide the player downhill
+            Vector3 gravityAlongSlope = Vector3.ProjectOnPlane(Physics.gravity, slopeHit.normal);
+            rb.AddForce(-gravityAlongSlope, ForceMode.Acceleration);
+
             return;
         }
 
@@ -215,6 +246,14 @@ public class PlayerMovement : MonoBehaviour
 
     private void SpeedControl()
     {
+        //sliding down a steep slope should be allowed to build up well past normal walking speed - cap separately instead of falling through to the walk-speed clamp below
+        if (onSteepSlope && grounded && !exitingSlope)
+        {
+            if (rb.linearVelocity.magnitude > maxSlideSpeed)
+                rb.linearVelocity = rb.linearVelocity.normalized * maxSlideSpeed;
+            return;
+        }
+
         //on a walkable slope, limit the full velocity (including vertical) so slopes don't let us exceed moveSpeed
         if (onSlope && grounded && !exitingSlope)
         {
@@ -243,6 +282,7 @@ public class PlayerMovement : MonoBehaviour
         rb.AddForce(transform.up * jumpForce, ForceMode.Impulse);
 
         handAnimator?.PlayJump();
+        audioController?.PlayJump();
     }
     private void ResetJump()
     {
