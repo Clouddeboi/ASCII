@@ -35,3 +35,10 @@ public enum MovementType
     Ground,
     Flying
 }
+
+public enum AttackType
+{
+    Melee,
+    Ranged,
+    AreaOfEffect
+}

@@ -13,6 +13,10 @@ public class StaticEnemyMovement : MonoBehaviour, IEnemyMover
     {
     }
 
+    public void SetSpeed(float speed)
+    {
+    }
+
     public void FaceTarget(Vector3 targetPosition)
     {
         Vector3 direction = targetPosition - transform.position;

@@ -28,6 +28,7 @@ public class EnemyHealth : MonoBehaviour, IKillable
         float finalAmount = amount * multiplier;
         if (finalAmount <= 0f) return;
 
+        Debug.Log($"[EnemyHealth] '{name}' took {finalAmount} {type} damage ({currentHealth} -> {currentHealth - finalAmount}).", this);
         SetHealth(currentHealth - finalAmount);
     }
 

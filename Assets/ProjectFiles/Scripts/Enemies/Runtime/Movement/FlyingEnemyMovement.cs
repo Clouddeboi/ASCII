@@ -8,6 +8,7 @@ public class FlyingEnemyMovement : MonoBehaviour, IEnemyMover
     private EnemyInstance enemyInstance;
     private Vector3 destination;
     private bool hasDestination;
+    private float currentSpeed;
 
     public bool IsAtDestination => !hasDestination || Vector3.Distance(transform.position, destination) <= stoppingDistance;
 
@@ -15,14 +16,14 @@ public class FlyingEnemyMovement : MonoBehaviour, IEnemyMover
     {
         enemyInstance = GetComponent<EnemyInstance>();
         destination = transform.position;
+        currentSpeed = enemyInstance.Data.movement.moveSpeed;
     }
 
     private void Update()
     {
         if (!hasDestination) return;
 
-        EnemyMovementData movement = enemyInstance.Data.movement;
-        transform.position = Vector3.MoveTowards(transform.position, destination, movement.moveSpeed * Time.deltaTime);
+        transform.position = Vector3.MoveTowards(transform.position, destination, currentSpeed * Time.deltaTime);
         FaceTarget(destination);
 
         if (IsAtDestination)
@@ -38,6 +39,11 @@ public class FlyingEnemyMovement : MonoBehaviour, IEnemyMover
     public void Stop()
     {
         hasDestination = false;
+    }
+
+    public void SetSpeed(float speed)
+    {
+        currentSpeed = speed;
     }
 
     public void FaceTarget(Vector3 targetPosition)

@@ -6,6 +6,7 @@ using UnityEngine.AI;
 public class GroundEnemyMovement : MonoBehaviour, IEnemyMover
 {
     private NavMeshAgent agent;
+    private float rotationSpeed;
 
     public bool IsAtDestination => !agent.pathPending && agent.remainingDistance <= agent.stoppingDistance;
 
@@ -16,6 +17,10 @@ public class GroundEnemyMovement : MonoBehaviour, IEnemyMover
         agent.speed = movement.moveSpeed;
         agent.acceleration = movement.acceleration;
         agent.angularSpeed = movement.rotationSpeed;
+        rotationSpeed = movement.rotationSpeed;
+
+        // Rotation is driven manually via FaceTarget so facing holds even after the agent stops moving.
+        agent.updateRotation = false;
     }
 
     public void MoveTo(Vector3 destination)
@@ -30,8 +35,18 @@ public class GroundEnemyMovement : MonoBehaviour, IEnemyMover
             agent.ResetPath();
     }
 
+    public void SetSpeed(float speed)
+    {
+        agent.speed = speed;
+    }
+
     public void FaceTarget(Vector3 targetPosition)
     {
-        // NavMeshAgent already turns the enemy along its path toward the destination.
+        Vector3 direction = targetPosition - transform.position;
+        direction.y = 0f;
+        if (direction.sqrMagnitude <= 0.0001f) return;
+
+        Quaternion targetRotation = Quaternion.LookRotation(direction);
+        transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
     }
 }

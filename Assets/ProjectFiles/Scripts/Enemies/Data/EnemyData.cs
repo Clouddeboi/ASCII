@@ -46,12 +46,57 @@ public class EnemyMovementData
     public float roamRadius = 0f;
 }
 
+[Serializable]
+public class AttackDefinition
+{
+    public string attackName = "Attack";
+    public AttackType type = AttackType.Melee;
+    public float range = 2f;
+    public float cooldown = 1.5f;
+    public float damage = 10f;
+    public DamageType damageType = DamageType.Physical;
+    [Tooltip("Seconds after the attack starts before damage is applied, to line up with an animation's hit frame.")]
+    public float hitDelay = 0.3f;
+    [Tooltip("Animator trigger name, used once an animation controller is wired up in a later stage.")]
+    public string animationTrigger;
+    [Tooltip("Used only when type is AreaOfEffect.")]
+    public float aoeRadius = 3f;
+    [Tooltip("Used only when type is Ranged. If left empty, the attack falls back to an instant hit.")]
+    public GameObject projectilePrefab;
+    public float projectileSpeed = 12f;
+}
+
+[Serializable]
+public class EnemyCombatData
+{
+    public List<AttackDefinition> attacks = new List<AttackDefinition>();
+}
+
+[Serializable]
+public class EnemyDetectionData
+{
+    public bool useVision = true;
+    public bool useHearing = false;
+    public float visionRange = 15f;
+    [Range(0f, 360f)] public float fieldOfViewAngle = 110f;
+    public LayerMask lineOfSightObstruction = ~0;
+    public float hearingRange = 8f;
+    [Tooltip("Player flat movement speed required to be heard at hearingRange.")]
+    public float hearingSensitivity = 2f;
+    [Tooltip("Seconds of continuous line of sight required before the enemy becomes alerted.")]
+    public float detectionDelay = 0.5f;
+    [Tooltip("How long the enemy keeps investigating a last known position after losing track of the player.")]
+    public float searchMemoryDuration = 5f;
+}
+
 [CreateAssetMenu(fileName = "New Enemy Data", menuName = "ASCII/Enemies/Enemy Data")]
 public class EnemyData : ScriptableObject
 {
     public EnemyIdentityData identity = new EnemyIdentityData();
     public EnemyHealthData health = new EnemyHealthData();
     public EnemyMovementData movement = new EnemyMovementData();
+    public EnemyDetectionData detection = new EnemyDetectionData();
+    public EnemyCombatData combat = new EnemyCombatData();
 
     public float GetDamageMultiplier(DamageType type)
     {

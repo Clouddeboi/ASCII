@@ -20,7 +20,9 @@ MonoBehaviour:
     threatLevel: 0
   health:
     maxHealth: 50
-    damageModifiers: []
+    damageModifiers:
+    - type: 0
+      multiplier: 0.5
     staggerThreshold: 25
     knockbackForce: 10
     deathBehavior: 0
@@ -31,3 +33,28 @@ MonoBehaviour:
     rotationSpeed: 120
     chaseSpeed: 5
     roamRadius: 10
+  detection:
+    useVision: 1
+    useHearing: 1
+    visionRange: 10
+    fieldOfViewAngle: 110
+    lineOfSightObstruction:
+      serializedVersion: 2
+      m_Bits: 4294967295
+    hearingRange: 8
+    hearingSensitivity: 2
+    detectionDelay: 0.5
+    searchMemoryDuration: 5
+  combat:
+    attacks:
+    - attackName: Swing
+      type: 0
+      range: 5
+      cooldown: 1
+      damage: 10
+      damageType: 0
+      hitDelay: 0
+      animationTrigger: 
+      aoeRadius: 0
+      projectilePrefab: {fileID: 0}
+      projectileSpeed: 0

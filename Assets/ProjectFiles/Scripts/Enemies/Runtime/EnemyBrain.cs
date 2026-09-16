@@ -13,6 +13,7 @@ public class EnemyBrain : MonoBehaviour
     private float tickTimer;
 
     public IEnemyMover Mover => mover;
+    public EnemyData Data => data;
     public EnemyMovementData MovementData => data.movement;
     public Transform[] PatrolWaypoints => patrolWaypoints;
     public Vector3 RoamOrigin { get; private set; }
@@ -28,11 +29,41 @@ public class EnemyBrain : MonoBehaviour
         if (mover == null)
             Debug.LogError($"[EnemyBrain] '{name}' has no IEnemyMover component (Static/Ground/Flying movement).", this);
 
-        root = new Selector(
-            new PatrolAction(this),
-            new RoamAction(this),
-            new IdleAction()
-        );
+        EnemyDetection detection = GetComponent<EnemyDetection>();
+        EnemyCombat combat = GetComponent<EnemyCombat>();
+
+        if (combat != null && detection == null)
+            Debug.LogWarning($"[EnemyBrain] '{name}' has EnemyCombat but no EnemyDetection - it will never attack.", this);
+
+        if (combat != null && data.identity.category != EnemyCategory.Hostile)
+            Debug.LogWarning($"[EnemyBrain] '{name}' has EnemyCombat but its category is {data.identity.category}, not Hostile - Chase/Attack are Hostile-only.", this);
+
+        if (detection != null && combat != null)
+        {
+            root = new Selector(
+                new AttackAction(this, detection, combat),
+                new ChaseAction(this, detection),
+                new InvestigateAction(this, detection),
+                new PatrolAction(this),
+                new RoamAction(this),
+                new IdleAction());
+        }
+        else if (detection != null)
+        {
+            root = new Selector(
+                new ChaseAction(this, detection),
+                new InvestigateAction(this, detection),
+                new PatrolAction(this),
+                new RoamAction(this),
+                new IdleAction());
+        }
+        else
+        {
+            root = new Selector(
+                new PatrolAction(this),
+                new RoamAction(this),
+                new IdleAction());
+        }
     }
 
     private void Update()

@@ -1,4 +1,4 @@
-// Cycles through the brain's patrol waypoints; fails (falls through) when none are assigned.
+//Cycles through the brain's patrol waypoints; fails (falls through) when none are assigned.
 public class PatrolAction : BTNode
 {
     private readonly EnemyBrain brain;
@@ -14,12 +14,15 @@ public class PatrolAction : BTNode
         if (waypoints == null || waypoints.Length == 0)
             return NodeStatus.Failure;
 
+        brain.Mover.SetSpeed(brain.MovementData.moveSpeed);
+
         if (brain.PatrolIndex < 0 || brain.Mover.IsAtDestination)
         {
             brain.PatrolIndex = (brain.PatrolIndex + 1) % waypoints.Length;
             brain.Mover.MoveTo(waypoints[brain.PatrolIndex].position);
         }
 
+        brain.Mover.FaceTarget(waypoints[brain.PatrolIndex].position);
         return NodeStatus.Running;
     }
 }

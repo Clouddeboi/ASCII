@@ -6,4 +6,5 @@ public interface IEnemyMover
     void MoveTo(Vector3 destination);
     void Stop();
     void FaceTarget(Vector3 targetPosition);
+    void SetSpeed(float speed);
 }
