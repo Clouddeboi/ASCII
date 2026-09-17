@@ -37,7 +37,7 @@ MonoBehaviour:
     useVision: 1
     useHearing: 1
     visionRange: 10
-    fieldOfViewAngle: 110
+    fieldOfViewAngle: 150
     lineOfSightObstruction:
       serializedVersion: 2
       m_Bits: 4294967295

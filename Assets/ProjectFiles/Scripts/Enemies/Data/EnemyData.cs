@@ -89,6 +89,21 @@ public class EnemyDetectionData
     public float searchMemoryDuration = 5f;
 }
 
+[Serializable]
+public class EnemyTerminalData
+{
+    [Tooltip("Whether /ping can reveal this enemy's display name and count.")]
+    public bool pingable = true;
+    [Tooltip("Whether automatic anomaly detection can flag this enemy's presence.")]
+    public bool anomalyDetectable = true;
+    [Tooltip("Danger level reported by /ping and anomaly detection for this enemy.")]
+    public ThreatLevel dangerClassification = ThreatLevel.Low;
+    [Tooltip("How far the terminal's scanner can detect this specific enemy (independent of the terminal's own scan radius).")]
+    public float terminalDetectionRange = 20f;
+    [Tooltip("Reserved for a future terminal-upgrade requirement - not yet enforced.")]
+    public string requiresUpgradeId;
+}
+
 [CreateAssetMenu(fileName = "New Enemy Data", menuName = "ASCII/Enemies/Enemy Data")]
 public class EnemyData : ScriptableObject
 {
@@ -97,6 +112,7 @@ public class EnemyData : ScriptableObject
     public EnemyMovementData movement = new EnemyMovementData();
     public EnemyDetectionData detection = new EnemyDetectionData();
     public EnemyCombatData combat = new EnemyCombatData();
+    public EnemyTerminalData terminal = new EnemyTerminalData();
 
     public float GetDamageMultiplier(DamageType type)
     {

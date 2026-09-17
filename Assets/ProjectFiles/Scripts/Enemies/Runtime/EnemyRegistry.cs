@@ -90,4 +90,46 @@ public class EnemyRegistry : MonoBehaviour
 
         return result;
     }
+
+    //Groups pingable enemies within range by display name, respecting each enemy's own terminalDetectionRange.
+    public Dictionary<string, int> GroupPingableByDisplayName(Vector3 origin, float scanRange)
+    {
+        var counts = new Dictionary<string, int>();
+
+        foreach (EnemyInstance enemy in InRange(origin, scanRange))
+        {
+            EnemyTerminalData terminalData = enemy.Data.terminal;
+            if (!terminalData.pingable) continue;
+
+            float effectiveRange = Mathf.Min(scanRange, terminalData.terminalDetectionRange);
+            if ((enemy.transform.position - origin).sqrMagnitude > effectiveRange * effectiveRange)
+                continue;
+
+            counts.TryGetValue(enemy.DisplayName, out int existing);
+            counts[enemy.DisplayName] = existing + 1;
+        }
+
+        return counts;
+    }
+
+    //Highest ThreatLevel among anomaly-detectable enemies in range, or null if none are present.
+    public ThreatLevel? GetHighestAnomalyDanger(Vector3 origin, float scanRange)
+    {
+        ThreatLevel? highest = null;
+
+        foreach (EnemyInstance enemy in InRange(origin, scanRange))
+        {
+            EnemyTerminalData terminalData = enemy.Data.terminal;
+            if (!terminalData.anomalyDetectable) continue;
+
+            float effectiveRange = Mathf.Min(scanRange, terminalData.terminalDetectionRange);
+            if ((enemy.transform.position - origin).sqrMagnitude > effectiveRange * effectiveRange)
+                continue;
+
+            if (!highest.HasValue || terminalData.dangerClassification > highest.Value)
+                highest = terminalData.dangerClassification;
+        }
+
+        return highest;
+    }
 }
