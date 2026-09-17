@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 //Forces interaction with the closest matching interactable in range, bypassing normal "press E" gating.
@@ -7,7 +9,7 @@ public class HackCommand : ITerminalCommand
 
     public string Name => "/hack";
     public string[] Aliases => new string[0];
-    public string Description => "Forcibly interact with the nearest matching object.";
+    public string Description => "Forcibly interact with the nearest matching object, or hack an enemy: /hack enemy <name>.";
     public string Usage => "/hack <target> [args]";
     public bool ClosesTerminal => false;
 
@@ -18,6 +20,12 @@ public class HackCommand : ITerminalCommand
         if (args.Length == 0)
         {
             context.Output.PrintError("USAGE: " + Usage);
+            return;
+        }
+
+        if (string.Equals(args[0], "enemy", StringComparison.OrdinalIgnoreCase))
+        {
+            ExecuteEnemyHack(args, context);
             return;
         }
 
@@ -76,5 +84,50 @@ public class HackCommand : ITerminalCommand
             return Camera.main.transform.position;
 
         return context.Terminal.transform.position;
+    }
+
+    //Hacking an enemy needs no line of sight - matches all enemies sharing that display name within their own hackRange.
+    private static void ExecuteEnemyHack(string[] args, TerminalContext context)
+    {
+        if (args.Length < 2)
+        {
+            context.Output.PrintError("USAGE: /hack enemy <name>");
+            return;
+        }
+
+        string displayName = string.Join(" ", args, 1, args.Length - 1);
+
+        if (EnemyRegistry.Instance == null)
+        {
+            context.Output.PrintError("ENEMY SCANNER UNAVAILABLE.");
+            return;
+        }
+
+        Vector3 origin = GetPlayerPosition(context);
+        var matches = new List<EnemyInstance>();
+
+        foreach (EnemyInstance enemy in EnemyRegistry.Instance.All)
+        {
+            if (enemy == null) continue;
+            if (!string.Equals(enemy.DisplayName, displayName, StringComparison.OrdinalIgnoreCase)) continue;
+            if (Vector3.Distance(origin, enemy.transform.position) <= enemy.Data.terminal.hackRange)
+                matches.Add(enemy);
+        }
+
+        if (matches.Count == 0)
+        {
+            context.Output.PrintError("NO MATCHING ENEMY IN RANGE: " + displayName);
+            return;
+        }
+
+        context.Output.PrintSystem($"HACKING {displayName.ToUpperInvariant()} x{matches.Count}...");
+
+        for (int i = 0; i < matches.Count; i++)
+        {
+            matches[i].TryHack(out string message);
+            context.Output.PrintResponse($"{displayName} {i + 1}: {message}");
+        }
+
+        context.Audio.PlayResponse();
     }
 }

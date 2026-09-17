@@ -29,6 +29,21 @@ public class EnemyDetection : MonoBehaviour
         data = GetComponent<EnemyInstance>().Data.detection;
     }
 
+    //Forces the enemy to immediately know the player's current position, e.g. after a failed hack.
+    public void ForceAlert()
+    {
+        if (!ResolvePlayer()) return;
+
+        LastKnownPlayerPosition = player.position;
+        memoryTimer = data.searchMemoryDuration;
+
+        if (!IsAlerted)
+        {
+            IsAlerted = true;
+            OnPlayerDetected?.Invoke();
+        }
+    }
+
     private void Update()
     {
         tickTimer += Time.deltaTime;

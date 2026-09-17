@@ -42,3 +42,17 @@ public enum AttackType
     Ranged,
     AreaOfEffect
 }
+
+public enum HackSuccessResponse
+{
+    Stun,
+    Kill,
+    ShutDown
+}
+
+public enum HackFailureResponse
+{
+    RevealLocation,
+    AlertNearbyEnemies,
+    TriggerAlarm
+}

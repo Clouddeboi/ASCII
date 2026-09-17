@@ -102,6 +102,18 @@ public class EnemyTerminalData
     public float terminalDetectionRange = 20f;
     [Tooltip("Reserved for a future terminal-upgrade requirement - not yet enforced.")]
     public string requiresUpgradeId;
+
+    [Header("Hacking")]
+    public bool hackable = false;
+    [Tooltip("Hacking range - no line of sight required.")]
+    public float hackRange = 10f;
+    [Range(0f, 1f)] public float hackSuccessRate = 0.5f;
+    [Tooltip("Item ID required in the player's inventory to attempt this hack (e.g. a hacking tool). Leave empty for none.")]
+    public string requiredItemId;
+    public HackSuccessResponse successResponse = HackSuccessResponse.Stun;
+    [Tooltip("Used only when successResponse is Stun.")]
+    public float stunDuration = 5f;
+    public HackFailureResponse failureResponse = HackFailureResponse.RevealLocation;
 }
 
 [CreateAssetMenu(fileName = "New Enemy Data", menuName = "ASCII/Enemies/Enemy Data")]

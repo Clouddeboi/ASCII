@@ -58,3 +58,16 @@ MonoBehaviour:
       aoeRadius: 0
       projectilePrefab: {fileID: 0}
       projectileSpeed: 0
+  terminal:
+    pingable: 1
+    anomalyDetectable: 1
+    dangerClassification: 0
+    terminalDetectionRange: 20
+    requiresUpgradeId: 
+    hackable: 1
+    hackRange: 20
+    hackSuccessRate: 0.75
+    requiredItemId: 
+    successResponse: 1
+    stunDuration: 5
+    failureResponse: 0
