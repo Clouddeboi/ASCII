@@ -1,0 +1,73 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb0f0e4012d606a458a451676c149a9e, type: 3}
+  m_Name: TestDummy
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyData
+  identity:
+    internalId: test_dummy_01
+    displayName: Test Dummy
+    description: 
+    category: 2
+    threatLevel: 0
+  health:
+    maxHealth: 50
+    damageModifiers:
+    - type: 0
+      multiplier: 0.5
+    staggerThreshold: 25
+    knockbackForce: 10
+    deathBehavior: 0
+  movement:
+    movementType: 1
+    moveSpeed: 3.5
+    acceleration: 8
+    rotationSpeed: 120
+    chaseSpeed: 5
+    roamRadius: 10
+  detection:
+    useVision: 1
+    useHearing: 1
+    visionRange: 10
+    fieldOfViewAngle: 150
+    lineOfSightObstruction:
+      serializedVersion: 2
+      m_Bits: 4294967295
+    hearingRange: 8
+    hearingSensitivity: 2
+    detectionDelay: 0.5
+    searchMemoryDuration: 5
+  combat:
+    attacks:
+    - attackName: Swing
+      type: 0
+      range: 5
+      cooldown: 1
+      damage: 10
+      damageType: 0
+      hitDelay: 0
+      animationTrigger: 
+      aoeRadius: 0
+      projectilePrefab: {fileID: 0}
+      projectileSpeed: 0
+  terminal:
+    pingable: 1
+    anomalyDetectable: 1
+    dangerClassification: 0
+    terminalDetectionRange: 20
+    requiresUpgradeId: 
+    hackable: 1
+    hackRange: 20
+    hackSuccessRate: 0.75
+    requiredItemId: 
+    successResponse: 1
+    stunDuration: 5
+    failureResponse: 0

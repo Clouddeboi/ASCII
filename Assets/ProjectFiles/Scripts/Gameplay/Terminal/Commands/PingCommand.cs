@@ -1,5 +1,9 @@
+using System.Collections.Generic;
+
 public class PingCommand : ITerminalCommand
 {
+    private const float ScanRadius = 25f;
+
     public string Name => "/ping";
     public string[] Aliases => new string[0];
     public string Description => "Display nearby entities.";
@@ -12,14 +16,27 @@ public class PingCommand : ITerminalCommand
     {
         context.Output.PrintSystem("SCANNING AREA...");
 
-        if (EntityManager.Instance == null)
+        if (EnemyRegistry.Instance == null)
         {
             context.Output.PrintError("ENTITY SCANNER UNAVAILABLE.");
             return;
         }
 
-        int count = EntityManager.Instance.CountNearby(context.Terminal.transform.position);
-        context.Output.PrintResponse($"ENTITIES DETECTED: {count}");
+        Dictionary<string, int> counts = EnemyRegistry.Instance.GroupPingableByDisplayName(context.Terminal.transform.position, ScanRadius);
+
+        if (counts.Count == 0)
+        {
+            context.Output.PrintResponse("PING COMPLETE\n\nNO ENTITIES DETECTED.");
+            context.Audio.PlayResponse();
+            return;
+        }
+
+        var lines = new List<string>();
+        foreach (KeyValuePair<string, int> entry in counts)
+            lines.Add($"{entry.Key} x{entry.Value}");
+
+        context.Output.PrintResponse("PING COMPLETE\n\n" + string.Join("\n", lines));
         context.Audio.PlayResponse();
     }
 }
+

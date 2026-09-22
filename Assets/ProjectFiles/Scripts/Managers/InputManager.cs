@@ -13,6 +13,7 @@ public class InputManager : MonoBehaviour
     public InputAction SprintAction { get; private set; }
     public InputAction CancelAction { get; private set; }
     public InputAction InteractAction { get; private set; }
+    public InputAction AttackAction { get; private set; }
 
     private void Awake()
     {
@@ -33,6 +34,7 @@ public class InputManager : MonoBehaviour
         SprintAction = playerMap.FindAction("Sprint");
         CancelAction = uiMap.FindAction("Cancel");
         InteractAction = playerMap.FindAction("Interact");
+        AttackAction = playerMap.FindAction("Attack");
     }
 
     private void OnEnable()
