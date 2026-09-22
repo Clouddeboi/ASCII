@@ -12,10 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 300138e67c197074c8dfded411b90701, type: 3}
   m_Name: TerminalConfig
   m_EditorClassIdentifier: Assembly-CSharp::TerminalConfig
-  terminalName: NEXUS TERMINAL
+  terminalName: LAZARUS TERMINAL
   terminalVersion: v2.7.1
   bootMessages:
-  - INITIALIZING NEXUS TERMINAL...
+  - INITIALIZING LAZARUS TERMINAL...
   - LOADING KERNEL MODULES...
   - CONNECTION ESTABLISHED.
   currentUser: GUEST
@@ -25,8 +25,17 @@ MonoBehaviour:
   - NO ANOMALIES DETECTED.
   - 'SIGNAL INTEGRITY: STABLE.'
   - AWAITING INPUT...
-  asciiArt: "  ___   ___  ___ ___ \n / _ \\ / __|/ __|_ _|\n| (_) |\\__ \\ (__ |
-    | \n \\___/ |___/\\___|___|"
+  asciiArt: ' _      ______  _____      _____
+
+    | |    |__   /  |  __ \   / ____|
+
+    |
+    |       /     |  _  /   \___ \
+
+    | |____  / /__  | | \ \   ____) |
+
+    |_____/
+    /_____| |_|  \_\  \_____/'
   systemTextColor: {r: 0, g: 1, b: 0, a: 1}
   errorTextColor: {r: 1, g: 0, b: 0, a: 1}
   responseTextColor: {r: 0, g: 1, b: 1, a: 1}
