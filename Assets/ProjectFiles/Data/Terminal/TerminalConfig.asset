@@ -24,7 +24,6 @@ MonoBehaviour:
   randomStatusMessages:
   - NO ANOMALIES DETECTED.
   - 'SIGNAL INTEGRITY: STABLE.'
-  - AWAITING INPUT...
   asciiArt: ' _      ______  _____      _____
 
     | |    |__   /  |  __ \   / ____|

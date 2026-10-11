@@ -7,6 +7,8 @@ public class EnemyCombat : MonoBehaviour
 {
     private List<AttackDefinition> attacks;
     private float[] cooldownRemaining;
+    private EnemyAnimationController animationController;
+    private EnemyAudio enemyAudio;
 
     public bool HasAttacks => attacks != null && attacks.Count > 0;
     public bool IsAttacking { get; private set; }
@@ -15,6 +17,8 @@ public class EnemyCombat : MonoBehaviour
     {
         attacks = GetComponent<EnemyInstance>().Data.combat.attacks;
         cooldownRemaining = new float[attacks.Count];
+        animationController = GetComponent<EnemyAnimationController>();
+        enemyAudio = GetComponent<EnemyAudio>();
 
         if (attacks.Count == 0)
             Debug.LogWarning($"[EnemyCombat] '{name}' has an EnemyCombat component but no attacks configured in its EnemyData.", this);
@@ -51,6 +55,8 @@ public class EnemyCombat : MonoBehaviour
     private IEnumerator PerformAttack(AttackDefinition attack, Transform target)
     {
         IsAttacking = true;
+        animationController?.PlayAttack(attack.animationTrigger);
+        enemyAudio?.PlayAttack();
 
         if (attack.hitDelay > 0f)
             yield return new WaitForSeconds(attack.hitDelay);

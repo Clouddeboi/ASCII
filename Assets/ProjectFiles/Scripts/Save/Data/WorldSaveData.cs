@@ -6,5 +6,6 @@ public class WorldSaveData
 {
     public List<string> completedEvents = new List<string>();
     public List<string> pickedUpItems = new List<string>();
+    public List<string> deadEnemies = new List<string>();
     public List<SaveableStateEntry> saveableStates = new List<SaveableStateEntry>();
 }

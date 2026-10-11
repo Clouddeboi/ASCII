@@ -23,6 +23,7 @@ public class PatrolAction : BTNode
         }
 
         brain.Mover.FaceTarget(waypoints[brain.PatrolIndex].position);
+        brain.IsMoving = true;
         return NodeStatus.Running;
     }
 }

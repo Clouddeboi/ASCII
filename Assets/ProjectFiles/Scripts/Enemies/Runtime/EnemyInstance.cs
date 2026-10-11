@@ -1,28 +1,86 @@
 using System;
 using System.Collections;
 using UnityEngine;
+using UnityEngine.AI;
 
-public class EnemyInstance : MonoBehaviour
+public class EnemyInstance : MonoBehaviour, ISaveable
 {
     [SerializeField] private EnemyData data;
+    [Tooltip("Stable, scene-assigned identifier for the save system. Leave empty for enemies that don't need to persist.")]
+    [SerializeField] private string saveId;
 
     public string RuntimeId { get; private set; }
+    public bool IsShutDown { get; private set; }
 
     public EnemyData Data => data;
     public string DisplayName => data != null ? data.identity.displayName : name;
+    public string SaveId => saveId;
 
     private void Awake()
     {
         if (data == null)
             Debug.LogError($"[EnemyInstance] '{name}' has no EnemyData assigned.", this);
 
+        if (!string.IsNullOrEmpty(saveId) && SaveManager.Instance != null && SaveManager.Instance.IsEnemyDead(saveId))
+        {
+            Destroy(gameObject);
+            return;
+        }
+
         RuntimeId = Guid.NewGuid().ToString();
         EnemyRegistry.Instance?.Register(this);
+
+        if (!string.IsNullOrEmpty(saveId))
+            SaveableRegistry.Instance?.Register(this);
     }
 
     private void OnDestroy()
     {
         EnemyRegistry.Instance?.Unregister(this);
+        SaveableRegistry.Instance?.Unregister(this);
+    }
+
+    public string CaptureState()
+    {
+        EnemyHealth health = GetComponent<EnemyHealth>();
+        var state = new EnemySaveState
+        {
+            position = transform.position,
+            rotation = transform.rotation,
+            currentHealth = health != null ? health.CurrentHealth : data.health.maxHealth,
+            isShutDown = IsShutDown
+        };
+        return JsonUtility.ToJson(state);
+    }
+
+    public void RestoreState(string json)
+    {
+        EnemySaveState state = JsonUtility.FromJson<EnemySaveState>(json);
+
+        NavMeshAgent agent = GetComponent<NavMeshAgent>();
+        if (agent != null && agent.isOnNavMesh)
+            agent.Warp(state.position);
+        else
+            transform.position = state.position;
+        transform.rotation = state.rotation;
+
+        GetComponent<EnemyHealth>()?.SetHealthDirect(state.currentHealth);
+
+        if (state.isShutDown)
+        {
+            IsShutDown = true;
+            SetAiEnabled(false);
+            GetComponent<EnemyAnimationController>()?.SetHacked(true);
+        }
+    }
+
+    [Serializable]
+    private struct EnemySaveState
+    {
+        public Vector3 position;
+        public Quaternion rotation;
+        public float currentHealth;
+        public bool isShutDown;
     }
 
     //Attempts a hack, applies the configured success/failure response, and describes the outcome for terminal output.
@@ -67,6 +125,8 @@ public class EnemyInstance : MonoBehaviour
                 break;
             case HackSuccessResponse.ShutDown:
                 SetAiEnabled(false);
+                IsShutDown = true;
+                GetComponent<EnemyAnimationController>()?.SetHacked(true);
                 break;
             case HackSuccessResponse.Stun:
             default:
@@ -113,7 +173,9 @@ public class EnemyInstance : MonoBehaviour
     private IEnumerator StunRoutine(float duration)
     {
         SetAiEnabled(false);
+        GetComponent<EnemyAnimationController>()?.SetStunned(true);
         yield return new WaitForSeconds(Mathf.Max(duration, 0.1f));
+        GetComponent<EnemyAnimationController>()?.SetStunned(false);
         SetAiEnabled(true);
     }
 

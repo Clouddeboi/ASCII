@@ -32,6 +32,8 @@ public class EnemyHealthData
     public float staggerThreshold = 0f;
     public float knockbackForce = 0f;
     public DeathBehavior deathBehavior = DeathBehavior.Destroy;
+    [Tooltip("Used only when deathBehavior is PlayAnimationThenDestroy - seconds to wait before destroying.")]
+    public float deathAnimationDuration = 2f;
 }
 
 [Serializable]

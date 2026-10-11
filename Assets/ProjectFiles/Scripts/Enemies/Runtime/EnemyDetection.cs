@@ -27,6 +27,10 @@ public class EnemyDetection : MonoBehaviour
     private void Awake()
     {
         data = GetComponent<EnemyInstance>().Data.detection;
+
+        EnemyAudio enemyAudio = GetComponent<EnemyAudio>();
+        if (enemyAudio != null)
+            OnPlayerDetected += enemyAudio.PlayAlert;
     }
 
     //Forces the enemy to immediately know the player's current position, e.g. after a failed hack.

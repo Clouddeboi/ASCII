@@ -1,4 +1,15 @@
 public class IdleAction : BTNode
 {
-    public override NodeStatus Tick() => NodeStatus.Success;
+    private readonly EnemyBrain brain;
+
+    public IdleAction(EnemyBrain brain)
+    {
+        this.brain = brain;
+    }
+
+    public override NodeStatus Tick()
+    {
+        brain.IsMoving = false;
+        return NodeStatus.Success;
+    }
 }

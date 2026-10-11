@@ -6886,6 +6886,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyInstance
   data: {fileID: 11400000, guid: 7f16212b66cfaa24b8fd15d7854dce19, type: 2}
+  saveId: 1
 --- !u!114 &1159877214
 MonoBehaviour:
   m_ObjectHideFlags: 0

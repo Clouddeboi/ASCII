@@ -9,6 +9,7 @@ public class EnemyBrain : MonoBehaviour
 
     private IEnemyMover mover;
     private EnemyData data;
+    private EnemyAnimationController animationController;
     private BTNode root;
     private float tickTimer;
 
@@ -19,11 +20,13 @@ public class EnemyBrain : MonoBehaviour
     public Vector3 RoamOrigin { get; private set; }
     public int PatrolIndex { get; set; } = -1;
     public Vector3? RoamTarget { get; set; }
+    public bool IsMoving { get; set; }
 
     private void Awake()
     {
         data = GetComponent<EnemyInstance>().Data;
         mover = GetComponent<IEnemyMover>();
+        animationController = GetComponent<EnemyAnimationController>();
         RoamOrigin = transform.position;
 
         if (mover == null)
@@ -46,7 +49,7 @@ public class EnemyBrain : MonoBehaviour
                 new InvestigateAction(this, detection),
                 new PatrolAction(this),
                 new RoamAction(this),
-                new IdleAction());
+                new IdleAction(this));
         }
         else if (detection != null)
         {
@@ -55,14 +58,14 @@ public class EnemyBrain : MonoBehaviour
                 new InvestigateAction(this, detection),
                 new PatrolAction(this),
                 new RoamAction(this),
-                new IdleAction());
+                new IdleAction(this));
         }
         else
         {
             root = new Selector(
                 new PatrolAction(this),
                 new RoamAction(this),
-                new IdleAction());
+                new IdleAction(this));
         }
     }
 
@@ -75,5 +78,6 @@ public class EnemyBrain : MonoBehaviour
         tickTimer = 0f;
 
         root.Tick();
+        animationController?.SetMoving(IsMoving);
     }
 }

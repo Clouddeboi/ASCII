@@ -24,6 +24,7 @@ public class AttackAction : BTNode
         {
             brain.Mover.Stop();
             brain.Mover.FaceTarget(detection.PlayerTransform.position);
+            brain.IsMoving = false;
             return NodeStatus.Running;
         }
 
@@ -33,6 +34,7 @@ public class AttackAction : BTNode
             return NodeStatus.Failure;
 
         brain.Mover.Stop();
+        brain.IsMoving = false;
         return NodeStatus.Running;
     }
 }

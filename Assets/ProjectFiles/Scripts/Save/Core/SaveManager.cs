@@ -52,6 +52,7 @@ public class SaveManager : MonoBehaviour
     private float lastAutoSaveRealtime = -999f;
     private float sessionStartTime;
     private readonly HashSet<string> pickedUpItems = new HashSet<string>();
+    private readonly HashSet<string> deadEnemies = new HashSet<string>();
 
     public string CurrentSlotId { get; private set; }
     public bool HasActiveSave => !string.IsNullOrEmpty(CurrentSlotId);
@@ -128,6 +129,7 @@ public class SaveManager : MonoBehaviour
         CurrentSlotId = slotId;
         sessionStartTime = Time.realtimeSinceStartup;
         pickedUpItems.Clear();
+        deadEnemies.Clear();
 
         return WriteSaveFile(slotId, data);
     }
@@ -176,6 +178,8 @@ public class SaveManager : MonoBehaviour
         sessionStartTime = Time.realtimeSinceStartup;
         pickedUpItems.Clear();
         pickedUpItems.UnionWith(data.world.pickedUpItems);
+        deadEnemies.Clear();
+        deadEnemies.UnionWith(data.world.deadEnemies);
 
         string targetScene = data.metadata.sceneName;
         if (string.IsNullOrEmpty(targetScene) || SceneManager.GetActiveScene().name == targetScene)
@@ -270,6 +274,20 @@ public class SaveManager : MonoBehaviour
         return !string.IsNullOrEmpty(interactableId) && pickedUpItems.Contains(interactableId);
     }
 
+    //Called by EnemyHealth right when an enemy dies, so a reload doesn't respawn it even if it's about to be destroyed.
+    //Only affects the in-memory session; persisted to disk on the next SaveGame().
+    public void MarkEnemyDead(string saveId)
+    {
+        if (string.IsNullOrEmpty(saveId))
+            return;
+        deadEnemies.Add(saveId);
+    }
+
+    public bool IsEnemyDead(string saveId)
+    {
+        return !string.IsNullOrEmpty(saveId) && deadEnemies.Contains(saveId);
+    }
+
     private PlayerSaveData GatherPlayerData(PlayerSaveData existing)
     {
         var data = existing ?? new PlayerSaveData();
@@ -312,6 +330,7 @@ public class SaveManager : MonoBehaviour
         var data = existing ?? new WorldSaveData();
 
         data.pickedUpItems = pickedUpItems.ToList();
+        data.deadEnemies = deadEnemies.ToList();
 
         //Merge rather than replace: only the currently loaded scene's ISaveables are registered right now,
         //so entries belonging to other scenes the player has visited must be preserved, not wiped out.

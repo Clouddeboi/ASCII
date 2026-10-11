@@ -18,6 +18,7 @@ public class InvestigateAction : BTNode
         brain.Mover.SetSpeed(brain.MovementData.moveSpeed);
         brain.Mover.MoveTo(detection.LastKnownPlayerPosition.Value);
         brain.Mover.FaceTarget(detection.LastKnownPlayerPosition.Value);
+        brain.IsMoving = true;
         return NodeStatus.Running;
     }
 }
