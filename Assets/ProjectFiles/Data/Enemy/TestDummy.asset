@@ -24,13 +24,16 @@ MonoBehaviour:
     - type: 0
       multiplier: 0.5
     staggerThreshold: 25
+    staggerDuration: 0.4
     knockbackForce: 10
-    deathBehavior: 0
+    deathBehavior: 2
+    deathAnimationDuration: 100
+    deathCleanupDistance: 15
   movement:
     movementType: 1
     moveSpeed: 3.5
     acceleration: 8
-    rotationSpeed: 120
+    rotationSpeed: 200
     chaseSpeed: 5
     roamRadius: 10
   detection:
@@ -43,21 +46,24 @@ MonoBehaviour:
       m_Bits: 4294967295
     hearingRange: 8
     hearingSensitivity: 2
+    proximityRange: 2.5
     detectionDelay: 0.5
     searchMemoryDuration: 5
   combat:
     attacks:
     - attackName: Swing
       type: 0
-      range: 5
+      range: 2
       cooldown: 1
       damage: 10
       damageType: 0
-      hitDelay: 0
+      hitDelay: 0.3
+      attackDuration: 1
       animationTrigger: 
       aoeRadius: 0
       projectilePrefab: {fileID: 0}
       projectileSpeed: 0
+      stopsMovement: 1
   terminal:
     pingable: 1
     anomalyDetectable: 1
@@ -66,8 +72,8 @@ MonoBehaviour:
     requiresUpgradeId: 
     hackable: 1
     hackRange: 20
-    hackSuccessRate: 0.75
+    hackSuccessRate: 1
     requiredItemId: 
-    successResponse: 1
+    successResponse: 0
     stunDuration: 5
     failureResponse: 0

@@ -91,14 +91,15 @@ public class EnemyDetection : MonoBehaviour
 
         CanSeePlayer = data.useVision && EvaluateVision();
         CanHearPlayer = data.useHearing && EvaluateHearing();
+        bool inProximity = EvaluateProximity();
 
-        if (CanSeePlayer)
+        if (CanSeePlayer || inProximity)
         {
             sightTimer += dt;
             LastKnownPlayerPosition = player.position;
             memoryTimer = data.searchMemoryDuration;
 
-            if (!IsAlerted && sightTimer >= data.detectionDelay)
+            if (!IsAlerted && (inProximity || sightTimer >= data.detectionDelay))
             {
                 IsAlerted = true;
                 Debug.Log($"[EnemyDetection] '{name}' spotted the player.", this);
@@ -169,5 +170,20 @@ public class EnemyDetection : MonoBehaviour
             return false;
 
         return playerMovement.FlatSpeed >= data.hearingSensitivity;
+    }
+
+    private bool EvaluateProximity()
+    {
+        if (data.proximityRange <= 0f || player == null) return false;
+
+        Vector3 toPlayer = player.position - transform.position;
+        float horizontalDistSqr = toPlayer.x * toPlayer.x + toPlayer.z * toPlayer.z;
+        if (horizontalDistSqr > data.proximityRange * data.proximityRange)
+            return false;
+
+        if (Mathf.Abs(toPlayer.y) > 2.5f)
+            return false;
+
+        return true;
     }
 }

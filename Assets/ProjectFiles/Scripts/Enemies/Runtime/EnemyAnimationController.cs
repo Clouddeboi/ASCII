@@ -6,6 +6,8 @@ public class EnemyAnimationController : MonoBehaviour
     [SerializeField] private Animator animator;
     [SerializeField] private string speedParam = "Speed";
     [SerializeField] private string attackTriggerFallback = "Attack";
+    [SerializeField] private string attackIndexParam = "AttackIndex";
+    [SerializeField] private string distanceToPlayerParam = "DistanceToPlayer";
     [SerializeField] private string hitTrigger = "Hit";
     [SerializeField] private string deathTrigger = "Death";
     [SerializeField] private string stunnedBool = "Stunned";
@@ -17,9 +19,19 @@ public class EnemyAnimationController : MonoBehaviour
         animator.SetFloat(speedParam, isMoving ? 1f : 0f);
     }
 
-    public void PlayAttack(string attackTrigger)
+    public void SetDistanceToPlayer(float distance)
     {
         if (animator == null) return;
+        animator.SetFloat(distanceToPlayerParam, distance);
+    }
+
+    //attackIndex is the attack's position in EnemyData's attack list, lets a Blend Tree/sub-state machine pick a specific attack animation by number instead of (or alongside) a named trigger.
+    public void PlayAttack(string attackTrigger, int attackIndex)
+    {
+        if (animator == null) return;
+
+        animator.SetInteger(attackIndexParam, attackIndex);
+
         string trigger = string.IsNullOrEmpty(attackTrigger) ? attackTriggerFallback : attackTrigger;
         if (!string.IsNullOrEmpty(trigger))
             animator.SetTrigger(trigger);

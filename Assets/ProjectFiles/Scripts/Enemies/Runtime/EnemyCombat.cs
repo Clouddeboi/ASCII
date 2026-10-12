@@ -12,6 +12,7 @@ public class EnemyCombat : MonoBehaviour
 
     public bool HasAttacks => attacks != null && attacks.Count > 0;
     public bool IsAttacking { get; private set; }
+    public bool CurrentAttackStopsMovement { get; private set; } = true;
 
     private void Awake()
     {
@@ -33,40 +34,86 @@ public class EnemyCombat : MonoBehaviour
         }
     }
 
+    public float GetEffectiveDistance(Transform target)
+    {
+        if (target == null) return float.MaxValue;
+        Vector3 diff = target.position - transform.position;
+        float horizontalDistance = new Vector2(diff.x, diff.z).magnitude;
+        float verticalDiff = Mathf.Abs(diff.y);
+
+        // Target on a higher/lower ledge: include vertical difference if outside normal height range
+        if (verticalDiff > 2.5f)
+            return Mathf.Sqrt(horizontalDistance * horizontalDistance + verticalDiff * verticalDiff);
+
+        return horizontalDistance;
+    }
+
+    public bool IsInRange(Transform target)
+    {
+        if (target == null || attacks == null || attacks.Count == 0) return false;
+        float distance = GetEffectiveDistance(target);
+        for (int i = 0; i < attacks.Count; i++)
+        {
+            if (distance <= attacks[i].range)
+                return true;
+        }
+        return false;
+    }
+
     public bool TryAttack(Transform target)
     {
-        if (IsAttacking || target == null) return false;
+        if (IsAttacking || target == null || attacks == null) return false;
 
-        float distance = Vector3.Distance(transform.position, target.position);
+        float distance = GetEffectiveDistance(target);
+
+        // Picks the most appropriate attack in range (smallest range that still covers the distance), not just the first match.
+        int bestIndex = -1;
+        float bestRange = float.MaxValue;
 
         for (int i = 0; i < attacks.Count; i++)
         {
             if (cooldownRemaining[i] > 0f) continue;
             if (distance > attacks[i].range) continue;
+            if (attacks[i].range >= bestRange) continue;
 
-            cooldownRemaining[i] = attacks[i].cooldown;
-            StartCoroutine(PerformAttack(attacks[i], target));
-            return true;
+            bestRange = attacks[i].range;
+            bestIndex = i;
         }
 
-        return false;
+        if (bestIndex < 0) return false;
+
+        cooldownRemaining[bestIndex] = attacks[bestIndex].cooldown;
+        CurrentAttackStopsMovement = attacks[bestIndex].stopsMovement;
+        StartCoroutine(PerformAttack(bestIndex, target));
+        return true;
     }
 
-    private IEnumerator PerformAttack(AttackDefinition attack, Transform target)
+    private IEnumerator PerformAttack(int attackIndex, Transform target)
     {
+        AttackDefinition attack = attacks[attackIndex];
+
         IsAttacking = true;
-        animationController?.PlayAttack(attack.animationTrigger);
+        animationController?.PlayAttack(attack.animationTrigger, attackIndex);
         enemyAudio?.PlayAttack();
+
+        float totalDuration = Mathf.Max(attack.attackDuration, attack.hitDelay);
 
         if (attack.hitDelay > 0f)
             yield return new WaitForSeconds(attack.hitDelay);
 
         ResolveAttack(attack, target);
+
+        float remainingDuration = totalDuration - attack.hitDelay;
+        if (remainingDuration > 0f)
+            yield return new WaitForSeconds(remainingDuration);
+
         IsAttacking = false;
     }
 
     private void ResolveAttack(AttackDefinition attack, Transform target)
     {
+        float distance = GetEffectiveDistance(target);
+
         switch (attack.type)
         {
             case AttackType.Ranged:
@@ -74,13 +121,13 @@ public class EnemyCombat : MonoBehaviour
                 break;
 
             case AttackType.AreaOfEffect:
-                if (target != null && Vector3.Distance(transform.position, target.position) <= attack.aoeRadius)
+                if (target != null && distance <= attack.aoeRadius)
                     PlayerHealth.Instance?.TakeDamage(attack.damage);
                 break;
 
             case AttackType.Melee:
             default:
-                if (target != null && Vector3.Distance(transform.position, target.position) <= attack.range * 1.5f)
+                if (target != null && distance <= attack.range * 1.5f)
                 {
                     Debug.Log($"[EnemyCombat] '{name}' hit the player for {attack.damage} ({attack.damageType}).", this);
                     PlayerHealth.Instance?.TakeDamage(attack.damage);

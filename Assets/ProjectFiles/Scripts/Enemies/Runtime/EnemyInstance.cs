@@ -9,6 +9,11 @@ public class EnemyInstance : MonoBehaviour, ISaveable
     [Tooltip("Stable, scene-assigned identifier for the save system. Leave empty for enemies that don't need to persist.")]
     [SerializeField] private string saveId;
 
+    [Header("Debug")]
+    [SerializeField] private bool showFacingDebugRay = true;
+    [SerializeField] private float facingDebugRayLength = 2f;
+    [SerializeField] private Color facingDebugRayColor = Color.cyan;
+
     public string RuntimeId { get; private set; }
     public bool IsShutDown { get; private set; }
 
@@ -32,6 +37,13 @@ public class EnemyInstance : MonoBehaviour, ISaveable
 
         if (!string.IsNullOrEmpty(saveId))
             SaveableRegistry.Instance?.Register(this);
+    }
+
+    // transform.forward, not the model's visual facing - use this to spot a mismatch between the two.
+    private void Update()
+    {
+        if (!showFacingDebugRay) return;
+        Debug.DrawRay(transform.position + Vector3.up, transform.forward * facingDebugRayLength, facingDebugRayColor);
     }
 
     private void OnDestroy()
@@ -161,13 +173,31 @@ public class EnemyInstance : MonoBehaviour, ISaveable
             other.GetComponent<EnemyDetection>()?.ForceAlert();
     }
 
-    private void SetAiEnabled(bool isEnabled)
+    // Also stops the mover - disabling EnemyBrain alone doesn't cancel an in-progress NavMeshAgent path/flight glide, which otherwise keeps sliding the enemy toward its last destination.
+    public void SetAiEnabled(bool isEnabled)
     {
         EnemyBrain brain = GetComponent<EnemyBrain>();
         if (brain != null) brain.enabled = isEnabled;
 
         EnemyCombat combat = GetComponent<EnemyCombat>();
         if (combat != null) combat.enabled = isEnabled;
+
+        if (!isEnabled)
+            GetComponent<IEnemyMover>()?.Stop();
+    }
+
+    // Brief movement/action pause from cumulative damage (EnemyHealthData.staggerThreshold/staggerDuration), distinct from a long hack-induced Stun.
+    public void Stagger(float duration)
+    {
+        if (duration <= 0f) return;
+        StartCoroutine(StaggerRoutine(duration));
+    }
+
+    private IEnumerator StaggerRoutine(float duration)
+    {
+        SetAiEnabled(false);
+        yield return new WaitForSeconds(duration);
+        SetAiEnabled(true);
     }
 
     private IEnumerator StunRoutine(float duration)

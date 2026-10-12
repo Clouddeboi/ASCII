@@ -28,13 +28,18 @@ public class EnemyHealthData
 {
     public float maxHealth = 100f;
     public List<DamageModifier> damageModifiers = new List<DamageModifier>();
-    [Tooltip("Cumulative damage required within a short window to trigger a stagger.")]
+    [Tooltip("Cumulative damage taken since the last stagger required to trigger another one. 0 disables staggering.")]
     public float staggerThreshold = 0f;
+    [Tooltip("How long movement/actions pause for when staggered.")]
+    public float staggerDuration = 0.4f;
     public float knockbackForce = 0f;
     public DeathBehavior deathBehavior = DeathBehavior.Destroy;
-    [Tooltip("Used only when deathBehavior is PlayAnimationThenDestroy - seconds to wait before destroying.")]
+    [Tooltip("Used only when deathBehavior is PlayAnimationThenDestroy - destroys after this many seconds even if the player never leaves.")]
     public float deathAnimationDuration = 2f;
+    [Tooltip("Used only when deathBehavior is PlayAnimationThenDestroy - also destroys early once the player is at least this far away (0 disables the distance check).")]
+    public float deathCleanupDistance = 15f;
 }
+
 
 [Serializable]
 public class EnemyMovementData
@@ -59,6 +64,8 @@ public class AttackDefinition
     public DamageType damageType = DamageType.Physical;
     [Tooltip("Seconds after the attack starts before damage is applied, to line up with an animation's hit frame.")]
     public float hitDelay = 0.3f;
+    [Tooltip("Total duration of the attack animation/action. The enemy remains in the attack state (and stopped, if stopsMovement is true) for this full duration.")]
+    public float attackDuration = 1f;
     [Tooltip("Animator trigger name, used once an animation controller is wired up in a later stage.")]
     public string animationTrigger;
     [Tooltip("Used only when type is AreaOfEffect.")]
@@ -66,6 +73,8 @@ public class AttackDefinition
     [Tooltip("Used only when type is Ranged. If left empty, the attack falls back to an instant hit.")]
     public GameObject projectilePrefab;
     public float projectileSpeed = 12f;
+    [Tooltip("Whether the enemy plants its feet for this attack instead of continuing to chase/strafe while performing it.")]
+    public bool stopsMovement = true;
 }
 
 [Serializable]
@@ -85,6 +94,8 @@ public class EnemyDetectionData
     public float hearingRange = 8f;
     [Tooltip("Player flat movement speed required to be heard at hearingRange.")]
     public float hearingSensitivity = 2f;
+    [Tooltip("Close-range proximity awareness (touch/breathing range). When within this distance, the enemy detects the player's live position even if blind or silent. Set to 0 to disable.")]
+    public float proximityRange = 2f;
     [Tooltip("Seconds of continuous line of sight required before the enemy becomes alerted.")]
     public float detectionDelay = 0.5f;
     [Tooltip("How long the enemy keeps investigating a last known position after losing track of the player.")]

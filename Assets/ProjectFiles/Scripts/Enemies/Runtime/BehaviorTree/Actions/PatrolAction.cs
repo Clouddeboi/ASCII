@@ -22,7 +22,7 @@ public class PatrolAction : BTNode
             brain.Mover.MoveTo(waypoints[brain.PatrolIndex].position);
         }
 
-        brain.Mover.FaceTarget(waypoints[brain.PatrolIndex].position);
+        brain.FaceTargetPosition = waypoints[brain.PatrolIndex].position;
         brain.IsMoving = true;
         return NodeStatus.Running;
     }

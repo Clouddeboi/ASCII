@@ -1,4 +1,6 @@
 //Hostile enemies attack once alerted (seen or heard) and within one of their configured attack ranges.
+using UnityEngine;
+
 public class AttackAction : BTNode
 {
     private readonly EnemyBrain brain;
@@ -20,21 +22,43 @@ public class AttackAction : BTNode
         if (!detection.IsAlerted || detection.PlayerTransform == null)
             return NodeStatus.Failure;
 
+        Transform playerTarget = detection.PlayerTransform;
+
+        // Currently actively performing an attack animation
         if (combat.IsAttacking)
         {
-            brain.Mover.Stop();
-            brain.Mover.FaceTarget(detection.PlayerTransform.position);
-            brain.IsMoving = false;
+            if (combat.CurrentAttackStopsMovement)
+                brain.Mover.Stop();
+            brain.FaceTargetPosition = playerTarget.position;
+            brain.IsMoving = !combat.CurrentAttackStopsMovement;
             return NodeStatus.Running;
         }
 
-        brain.Mover.FaceTarget(detection.PlayerTransform.position);
+        // Try to trigger an attack if in range and off cooldown
+        if (combat.TryAttack(playerTarget))
+        {
+            if (combat.CurrentAttackStopsMovement)
+                brain.Mover.Stop();
+            brain.FaceTargetPosition = playerTarget.position;
+            brain.IsMoving = !combat.CurrentAttackStopsMovement;
+            return NodeStatus.Running;
+        }
 
-        if (!combat.TryAttack(detection.PlayerTransform))
-            return NodeStatus.Failure;
+        // Reached the player (in attack range), but attack is currently on cooldown
+        if (combat.IsInRange(playerTarget))
+        {
+            brain.FaceTargetPosition = playerTarget.position;
 
-        brain.Mover.Stop();
-        brain.IsMoving = false;
-        return NodeStatus.Running;
+            // Hold position facing player while waiting for cooldown instead of running/sliding into them
+            if (combat.CurrentAttackStopsMovement)
+            {
+                brain.Mover.Stop();
+                brain.IsMoving = false;
+                return NodeStatus.Running;
+            }
+        }
+
+        // Out of attack range, or mobile attack: fall through to ChaseAction
+        return NodeStatus.Failure;
     }
 }

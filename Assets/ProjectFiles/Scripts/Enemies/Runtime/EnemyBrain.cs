@@ -10,6 +10,7 @@ public class EnemyBrain : MonoBehaviour
     private IEnemyMover mover;
     private EnemyData data;
     private EnemyAnimationController animationController;
+    private EnemyDetection detection;
     private BTNode root;
     private float tickTimer;
 
@@ -21,6 +22,7 @@ public class EnemyBrain : MonoBehaviour
     public int PatrolIndex { get; set; } = -1;
     public Vector3? RoamTarget { get; set; }
     public bool IsMoving { get; set; }
+    public Vector3? FaceTargetPosition { get; set; }
 
     private void Awake()
     {
@@ -32,7 +34,7 @@ public class EnemyBrain : MonoBehaviour
         if (mover == null)
             Debug.LogError($"[EnemyBrain] '{name}' has no IEnemyMover component (Static/Ground/Flying movement).", this);
 
-        EnemyDetection detection = GetComponent<EnemyDetection>();
+        detection = GetComponent<EnemyDetection>();
         EnemyCombat combat = GetComponent<EnemyCombat>();
 
         if (combat != null && detection == null)
@@ -49,7 +51,7 @@ public class EnemyBrain : MonoBehaviour
                 new InvestigateAction(this, detection),
                 new PatrolAction(this),
                 new RoamAction(this),
-                new IdleAction(this));
+                new IdleAction(this, detection));
         }
         else if (detection != null)
         {
@@ -58,20 +60,27 @@ public class EnemyBrain : MonoBehaviour
                 new InvestigateAction(this, detection),
                 new PatrolAction(this),
                 new RoamAction(this),
-                new IdleAction(this));
+                new IdleAction(this, detection));
         }
         else
         {
             root = new Selector(
                 new PatrolAction(this),
                 new RoamAction(this),
-                new IdleAction(this));
+                new IdleAction(this, null));
         }
     }
 
     private void Update()
     {
         if (mover == null) return;
+
+        if (detection != null && detection.PlayerTransform != null)
+            animationController?.SetDistanceToPlayer(Vector3.Distance(transform.position, detection.PlayerTransform.position));
+
+        // Applied every frame (not gated by tickInterval) so rotation speed isn't throttled down to the BT's tick rate.
+        if (FaceTargetPosition.HasValue)
+            mover.FaceTarget(FaceTargetPosition.Value);
 
         tickTimer += Time.deltaTime;
         if (tickTimer < tickInterval) return;

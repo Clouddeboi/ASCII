@@ -9,6 +9,7 @@ public class EnemyHealth : MonoBehaviour, IKillable
     private EnemyAnimationController animationController;
     private EnemyAudio enemyAudio;
     private float currentHealth;
+    private float staggerAccumulator;
 
     public event Action<float, float> OnHealthChanged;
     public event Action OnDeath;
@@ -40,6 +41,17 @@ public class EnemyHealth : MonoBehaviour, IKillable
         {
             animationController?.PlayHit();
             enemyAudio?.PlayHit();
+
+            float staggerThreshold = enemyInstance.Data.health.staggerThreshold;
+            if (staggerThreshold > 0f)
+            {
+                staggerAccumulator += finalAmount;
+                if (staggerAccumulator >= staggerThreshold)
+                {
+                    staggerAccumulator = 0f;
+                    enemyInstance.Stagger(enemyInstance.Data.health.staggerDuration);
+                }
+            }
         }
     }
 
@@ -78,6 +90,9 @@ public class EnemyHealth : MonoBehaviour, IKillable
         animationController?.PlayDeath();
         enemyAudio?.PlayDeath();
 
+        // Stop moving/attacking immediately so a corpse awaiting destruction doesn't keep sliding or swinging.
+        enemyInstance.SetAiEnabled(false);
+
         // Marked immediately (not via CaptureState) since this object may be destroyed before the next save.
         SaveManager.Instance?.MarkEnemyDead(enemyInstance.SaveId);
 
@@ -87,7 +102,7 @@ public class EnemyHealth : MonoBehaviour, IKillable
                 gameObject.SetActive(false);
                 break;
             case DeathBehavior.PlayAnimationThenDestroy:
-                StartCoroutine(DestroyAfterDelay(enemyInstance.Data.health.deathAnimationDuration));
+                StartCoroutine(DestroyAfterDeathAnimation());
                 break;
             case DeathBehavior.Destroy:
             default:
@@ -96,9 +111,26 @@ public class EnemyHealth : MonoBehaviour, IKillable
         }
     }
 
-    private IEnumerator DestroyAfterDelay(float delay)
+    // Holds on the death animation's final frame (configure the clip with Loop Time off) until either
+    // deathAnimationDuration elapses or the player moves at least deathCleanupDistance away - whichever comes first.
+    private IEnumerator DestroyAfterDeathAnimation()
     {
-        yield return new WaitForSeconds(delay);
+        EnemyHealthData healthData = enemyInstance.Data.health;
+        float elapsed = 0f;
+
+        while (elapsed < healthData.deathAnimationDuration)
+        {
+            if (healthData.deathCleanupDistance > 0f && PlayerHealth.Instance != null)
+            {
+                float sqrDistance = (PlayerHealth.Instance.transform.position - transform.position).sqrMagnitude;
+                if (sqrDistance >= healthData.deathCleanupDistance * healthData.deathCleanupDistance)
+                    break;
+            }
+
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+
         Destroy(gameObject);
     }
 }

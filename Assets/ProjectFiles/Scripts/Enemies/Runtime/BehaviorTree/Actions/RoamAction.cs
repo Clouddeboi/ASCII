@@ -26,7 +26,7 @@ public class RoamAction : BTNode
             brain.Mover.MoveTo(point);
         }
 
-        brain.Mover.FaceTarget(brain.RoamTarget.Value);
+        brain.FaceTargetPosition = brain.RoamTarget.Value;
         brain.IsMoving = true;
         return NodeStatus.Running;
     }
